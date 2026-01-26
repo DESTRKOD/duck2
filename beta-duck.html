@@ -680,15 +680,6 @@ html, body {
   <button class="button" id="toMenuFromSupport">Вернуться в меню</button>
 </div>
 
-<!-- ОЖИДАНИЕ ВЫПОЛНЕНИЯ -->
-<div id="waiting" class="screen">
-  <div id="animWaiting" class="sticker"></div>
-  <div class="title">Ожидайте выполнения</div>
-  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
-    Ваш заказ обрабатывается администратором
-  </div>
-</div>
-
 <!-- ЗАКАЗ ГОТОВ -->
 <div id="orderReady" class="screen">
   <div id="animOrderReady" class="sticker"></div>
@@ -731,16 +722,6 @@ let currentPaymentUrl = null;
 let wrongCodeAttempts = 0;
 
 // ===== Lottie анимации =====
-
-// После других lottie.loadAnimation добавь:
-lottie.loadAnimation({
-  container: document.getElementById('animWaiting'),
-  renderer: 'svg',
-  loop: true,
-  autoplay: true,
-  path: 'waiting.json' // или замени на другую анимацию
-});
-  
 lottie.loadAnimation({
   container: document.getElementById('animHello'),
   renderer: 'svg',
@@ -748,6 +729,7 @@ lottie.loadAnimation({
   autoplay: true,
   path: 'hello.json'
 });
+
 lottie.loadAnimation({
   container: document.getElementById('animDownload'),
   renderer: 'svg',
@@ -755,6 +737,7 @@ lottie.loadAnimation({
   autoplay: true,
   path: 'download.json'
 });
+
 lottie.loadAnimation({
   container: document.getElementById('animMain'),
   renderer: 'svg',
@@ -762,36 +745,41 @@ lottie.loadAnimation({
   autoplay: true,
   path: 'main.json'
 });
-loadLottieAnimation('animWaiting', 'waiting.json');
 
-// Загружаем анимации для новых экранов
-const loadLottieAnimation = (elementId, animationFile) => {
-  const container = document.getElementById(elementId);
-  if (container) {
-    lottie.loadAnimation({
-      container: container,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      path: animationFile
-    });
+// Загружаем анимации для всех экранов
+function loadAllLottieAnimations() {
+  const animations = {
+    'animBadPay': 'bad_pay.json',
+    'animEnterEmail': 'enter_email.json',
+    'animEnterCode': 'enter_code.json',
+    'animBadCode': 'bad_code.json',
+    'animOrderReady': 'order_ready.json',
+    'animWaiting': 'waiting.json',
+    'animSupport': 'support.json'
+  };
+
+  for (const [elementId, animationFile] of Object.entries(animations)) {
+    const container = document.getElementById(elementId);
+    if (container) {
+      try {
+        lottie.loadAnimation({
+          container: container,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          path: animationFile
+        });
+      } catch (e) {
+        console.log(`Анимация ${animationFile} не загружена, используй другую`);
+      }
+    }
   }
-};
-
-
-
-// Функция автообновления товаров
-function startAutoRefreshProducts() {
-  setInterval(() => {
-    console.log('Автообновление товаров...');
-    loadProducts();
-  }, 10000); // 10 секунд
 }
 
 // ===== Переключение экранов =====
 function show(id) {
   const ids = ['hello', 'load', 'intro', 'menu', 'checkout', 'payment', 'badPay', 
-               'enterEmail', 'enterCode', 'badCode', 'support', 'orderReady'];
+               'enterEmail', 'enterCode', 'badCode', 'support', 'orderReady', 'waiting'];
   const current = ids.map(x => document.getElementById(x)).find(el => el.classList.contains('active'));
   const next = document.getElementById(id);
 
@@ -803,25 +791,6 @@ function show(id) {
         el.classList.remove('active', 'leaving');
       });
       next.classList.add('active');
-      
-      // Загружаем нужную анимацию при переходе
-      switch(id) {
-        case 'badPay':
-          loadLottieAnimation('animBadPay', 'bad_pay.json');
-          break;
-        case 'enterEmail':
-          loadLottieAnimation('animEnterEmail', 'enter_email.json');
-          break;
-        case 'enterCode':
-          loadLottieAnimation('animEnterCode', 'enter_code.json');
-          break;
-        case 'badCode':
-          loadLottieAnimation('animBadCode', 'bad_code.json');
-          break;
-        case 'orderReady':
-          loadLottieAnimation('animOrderReady', 'order_ready.json');
-          break;
-      }
     }, 350);
   } else {
     ids.forEach(x => document.getElementById(x).classList.remove('active', 'leaving'));
@@ -844,12 +813,14 @@ continueBtn.addEventListener('click', () => {
 
 // ===== ТОВАРЫ (ИСПРАВЛЕННАЯ ВЕРСИЯ) =====
 let PRODUCTS = []; // Будет заполняться с сервера
+let productsCheckInterval = null;
 
 // Функция форматирования суммы
 function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
+// Загрузка товаров с сервера
 async function loadProducts() {
   try {
     console.log('Загрузка товаров с:', `${API_URL}/api/products`);
@@ -875,22 +846,22 @@ async function loadProducts() {
   }
 }
 
-// Запускаем загрузку товаров при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-  loadProducts(); // Первая загрузка
-  startAutoRefreshProducts(); // Автообновление
+// Запускаем автообновление товаров
+function startAutoRefreshProducts() {
+  // Очищаем предыдущий интервал если есть
+  if (productsCheckInterval) {
+    clearInterval(productsCheckInterval);
+  }
   
-  // Запускаем автообновление каждые 10 секунд
-  setInterval(loadProducts, 10000); // 10 секунд
+  // Загружаем сразу
+  loadProducts();
   
-  // Обновляем корзину
-  updateBadge();
-  
-  // Проверяем результат оплаты
-  checkPaymentResult();
-  
-  console.log('Инициализация завершена');
-});
+  // И каждые 10 секунд
+  productsCheckInterval = setInterval(() => {
+    console.log('Автообновление товаров...');
+    loadProducts();
+  }, 10000); // 10 секунд
+}
 
 // Запасные товары если сервер недоступен
 function loadBackupProducts() {
@@ -912,6 +883,7 @@ function loadBackupProducts() {
   renderProducts(); // Отрисовываем товары
 }
 
+// Отрисовка товаров
 function renderProducts() {
   const cardsEl = document.getElementById('cards');
   if (!cardsEl) {
@@ -1290,20 +1262,37 @@ document.getElementById('submitCode').addEventListener('click', async () => {
 });
 
 // Функция проверки статуса заказа
+let orderCheckInterval = null;
 function startCheckingOrderStatus() {
-  const checkInterval = setInterval(async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/order-status/${currentOrderId}`);
-      const data = await response.json();
-      
-      if (data.success && data.status === 'completed') {
-        clearInterval(checkInterval); // Останавливаем проверку
-        show('orderReady'); // Показываем экран готовности
+  // Очищаем предыдущий интервал если есть
+  if (orderCheckInterval) {
+    clearInterval(orderCheckInterval);
+  }
+  
+  // Проверяем сразу
+  checkOrderStatus();
+  
+  // И каждые 5 секунд
+  orderCheckInterval = setInterval(() => {
+    checkOrderStatus();
+  }, 5000);
+}
+
+async function checkOrderStatus() {
+  try {
+    const response = await fetch(`${API_URL}/api/order-status/${currentOrderId}`);
+    const data = await response.json();
+    
+    if (data.success && data.status === 'completed') {
+      if (orderCheckInterval) {
+        clearInterval(orderCheckInterval);
+        orderCheckInterval = null;
       }
-    } catch (error) {
-      console.error('Ошибка проверки статуса:', error);
+      show('orderReady');
     }
-  }, 5000); // Проверка каждые 5 секунд
+  } catch (error) {
+    console.error('Ошибка проверки статуса:', error);
+  }
 }
 
 // ===== КНОПКИ ВОЗВРАТА =====
@@ -1327,16 +1316,16 @@ function checkPaymentResult() {
       .then(data => {
         if (data.success) {
           if (data.status === 'support_needed') {
-            show('support'); // Уже есть
+            show('support');
           } else if (data.status === 'waiting') {
-            show('waiting'); // Новый экран
-            startCheckingOrderStatus(); // Начинаем проверять готовность
+            show('waiting');
+            startCheckingOrderStatus();
           } else {
-            show('enterEmail'); // Обычный заказ
+            show('enterEmail');
           }
         }
       })
-      .catch(() => show('enterEmail')); // Если ошибка - показываем email
+      .catch(() => show('enterEmail'));
       
     // Очищаем URL
     const newUrl = window.location.pathname;
@@ -1349,6 +1338,25 @@ function checkPaymentResult() {
     window.history.replaceState({}, '', newUrl);
   }
 }
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Сайт загружен, запускаем инициализацию...');
+  
+  // Загружаем все анимации
+  loadAllLottieAnimations();
+  
+  // Запускаем автообновление товаров
+  startAutoRefreshProducts();
+  
+  // Обновляем корзину
+  updateBadge();
+  
+  // Проверяем результат оплаты
+  checkPaymentResult();
+  
+  console.log('Инициализация завершена');
+});
 
 // Очистить корзину
 document.getElementById('clearCart').addEventListener('click', clearCart);
