@@ -1237,15 +1237,24 @@ document.getElementById('toMenuFromSupport').addEventListener('click', () => sho
 document.getElementById('toMenuFromReady').addEventListener('click', () => show('menu'));
 
 // ===== ОБРАБОТКА ВОЗВРАТА ИЗ ОПЛАТЫ =====
-// Проверяем параметры URL после возврата с оплаты
 function checkPaymentResult() {
   const urlParams = new URLSearchParams(window.location.search);
   const status = urlParams.get('payment');
+  const orderId = urlParams.get('order');
   
-  if (status === 'success' && currentOrderId) {
+  if (status === 'success' && orderId) {
+    currentOrderId = orderId; // Сохраняем orderId из URL
     show('enterEmail');
-  } else if (status === 'fail') {
+    
+    // Очищаем URL чтобы при обновлении страницы не переходило снова
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  } else if (status === 'fail' && orderId) {
+    currentOrderId = orderId;
     show('badPay');
+    
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
   }
 }
 
