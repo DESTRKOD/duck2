@@ -587,6 +587,15 @@ html, body {
   </div>
 </div>
 
+<!-- ОЖИДАНИЕ ВЫПОЛНЕНИЯ -->
+<div id="waiting" class="screen">
+  <div id="animWaiting" class="sticker"></div>
+  <div class="title">Ожидайте выполнения</div>
+  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
+    Ваш заказ обрабатывается администратором
+  </div>
+</div>
+
 <!-- ОФОРМЛЕНИЕ ЗАКАЗА -->
 <div id="checkout" class="screen checkout-screen">
   <div id="animCheckout" class="sticker"></div>
@@ -648,7 +657,7 @@ html, body {
     <input type="text" maxlength="1" class="code-digit" data-index="5">
   </div>
   
-  <button class="button" id="submitCode" style="margin-top: 30px;">Подтвердить код</button>
+  <button class="button" id="submitCode" style="margin-top: 30px;">Ввести код</button>
 </div>
 
 <!-- НЕВЕРНЫЙ КОД -->
@@ -669,6 +678,15 @@ html, body {
     Возникли проблемы с кодом? Напишите в поддержку для решения вопроса
   </div>
   <button class="button" id="toMenuFromSupport">Вернуться в меню</button>
+</div>
+
+<!-- ОЖИДАНИЕ ВЫПОЛНЕНИЯ -->
+<div id="waiting" class="screen">
+  <div id="animWaiting" class="sticker"></div>
+  <div class="title">Ожидайте выполнения</div>
+  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
+    Ваш заказ обрабатывается администратором
+  </div>
 </div>
 
 <!-- ЗАКАЗ ГОТОВ -->
@@ -713,6 +731,16 @@ let currentPaymentUrl = null;
 let wrongCodeAttempts = 0;
 
 // ===== Lottie анимации =====
+
+// После других lottie.loadAnimation добавь:
+lottie.loadAnimation({
+  container: document.getElementById('animWaiting'),
+  renderer: 'svg',
+  loop: true,
+  autoplay: true,
+  path: 'waiting.json' // или замени на другую анимацию
+});
+  
 lottie.loadAnimation({
   container: document.getElementById('animHello'),
   renderer: 'svg',
@@ -734,6 +762,7 @@ lottie.loadAnimation({
   autoplay: true,
   path: 'main.json'
 });
+loadLottieAnimation('animWaiting', 'waiting.json');
 
 // Загружаем анимации для новых экранов
 const loadLottieAnimation = (elementId, animationFile) => {
@@ -748,6 +777,16 @@ const loadLottieAnimation = (elementId, animationFile) => {
     });
   }
 };
+
+
+
+// Функция автообновления товаров
+function startAutoRefreshProducts() {
+  setInterval(() => {
+    console.log('Автообновление товаров...');
+    loadProducts();
+  }, 10000); // 10 секунд
+}
 
 // ===== Переключение экранов =====
 function show(id) {
@@ -811,7 +850,6 @@ function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
-// Загрузка товаров с сервера
 async function loadProducts() {
   try {
     console.log('Загрузка товаров с:', `${API_URL}/api/products`);
@@ -837,6 +875,23 @@ async function loadProducts() {
   }
 }
 
+// Запускаем загрузку товаров при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+  loadProducts(); // Первая загрузка
+  startAutoRefreshProducts(); // Автообновление
+  
+  // Запускаем автообновление каждые 10 секунд
+  setInterval(loadProducts, 10000); // 10 секунд
+  
+  // Обновляем корзину
+  updateBadge();
+  
+  // Проверяем результат оплаты
+  checkPaymentResult();
+  
+  console.log('Инициализация завершена');
+});
+
 // Запасные товары если сервер недоступен
 function loadBackupProducts() {
   PRODUCTS = [
@@ -857,7 +912,6 @@ function loadBackupProducts() {
   renderProducts(); // Отрисовываем товары
 }
 
-// Отрисовка товаров
 function renderProducts() {
   const cardsEl = document.getElementById('cards');
   if (!cardsEl) {
@@ -865,8 +919,10 @@ function renderProducts() {
     return;
   }
   
-  console.log('Отрисовка товаров:', PRODUCTS.length);
+  // Сохраняем текущий scroll position
+  const scrollPos = cardsEl.scrollTop;
   
+  // Рендерим товары
   cardsEl.innerHTML = PRODUCTS.map(p => `
     <div class="shop-card">
       ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
@@ -883,9 +939,10 @@ function renderProducts() {
     </div>
   `).join('');
   
-  // Проверяем что товары отрисовались
-  const allCards = cardsEl.querySelectorAll('.shop-card');
-  console.log('Отрисовано карточек:', allCards.length);
+  // Восстанавливаем scroll position
+  cardsEl.scrollTop = scrollPos;
+  
+  console.log('Отрисовано товаров:', PRODUCTS.length);
 }
 
 // ===== КОРЗИНА =====
@@ -1213,22 +1270,41 @@ document.getElementById('submitCode').addEventListener('click', async () => {
     const data = await response.json();
     
     if (data.success) {
-      wrongCodeAttempts = 0; // Сбрасываем счетчик ошибок
-      show('orderReady');
-      clearCart(); // Очищаем корзину после успешного заказа
-    } else {
-      wrongCodeAttempts++;
-      if (wrongCodeAttempts >= 2) {
-        show('support');
+      // После ввода кода показываем "ожидание"
+      if (data.status === 'waiting') {
+        show('waiting');
+        startCheckingOrderStatus();
       } else {
-        show('badCode');
+        show('orderReady');
       }
+      
+      clearCart();
+    } else {
+      // Если код неверный - показываем существующий экран badCode
+      show('badCode');
     }
   } catch (error) {
     console.error('Ошибка:', error);
     alert('Ошибка соединения с сервером');
   }
 });
+
+// Функция проверки статуса заказа
+function startCheckingOrderStatus() {
+  const checkInterval = setInterval(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/order-status/${currentOrderId}`);
+      const data = await response.json();
+      
+      if (data.success && data.status === 'completed') {
+        clearInterval(checkInterval); // Останавливаем проверку
+        show('orderReady'); // Показываем экран готовности
+      }
+    } catch (error) {
+      console.error('Ошибка проверки статуса:', error);
+    }
+  }, 5000); // Проверка каждые 5 секунд
+}
 
 // ===== КНОПКИ ВОЗВРАТА =====
 document.getElementById('toMenuFromBadPay').addEventListener('click', () => show('menu'));
@@ -1243,10 +1319,26 @@ function checkPaymentResult() {
   const orderId = urlParams.get('order');
   
   if (status === 'success' && orderId) {
-    currentOrderId = orderId; // Сохраняем orderId из URL
-    show('enterEmail');
+    currentOrderId = orderId;
     
-    // Очищаем URL чтобы при обновлении страницы не переходило снова
+    // Проверяем статус заказа на сервере
+    fetch(`${API_URL}/api/order-status/${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (data.status === 'support_needed') {
+            show('support'); // Уже есть
+          } else if (data.status === 'waiting') {
+            show('waiting'); // Новый экран
+            startCheckingOrderStatus(); // Начинаем проверять готовность
+          } else {
+            show('enterEmail'); // Обычный заказ
+          }
+        }
+      })
+      .catch(() => show('enterEmail')); // Если ошибка - показываем email
+      
+    // Очищаем URL
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
   } else if (status === 'fail' && orderId) {
@@ -1257,22 +1349,6 @@ function checkPaymentResult() {
     window.history.replaceState({}, '', newUrl);
   }
 }
-
-// ===== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ =====
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Сайт загружен, запускаем инициализацию...');
-  
-  // Загружаем товары сразу
-  loadProducts();
-  
-  // Обновляем корзину
-  updateBadge();
-  
-  // Проверяем результат оплаты
-  checkPaymentResult();
-  
-  console.log('Инициализация завершена');
-});
 
 // Очистить корзину
 document.getElementById('clearCart').addEventListener('click', clearCart);
