@@ -707,7 +707,7 @@ html, body {
 
 <script>
 // ===== КОНФИГУРАЦИЯ =====
-const API_URL = 'https://duck-shop-sever.onrender.com'; 
+const API_URL = 'https://duck-shop-sever.onrender.com'; // ТОЧНО ТАК КАК У ТЕБЯ В СЕРВЕРЕ
 let currentOrderId = null;
 let currentPaymentUrl = null;
 let wrongCodeAttempts = 0;
@@ -803,42 +803,90 @@ continueBtn.addEventListener('click', () => {
   }, 2500);
 });
 
-async function loadProducts() {
-  try {
-    const response = await fetch(`${API_URL}/products`);
-    const data = await response.json();
-    
-    if (data.success) {
-      window.PRODUCTS = data.products;
-      renderProducts(); // Функция отрисовки товаров
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки товаров:', error);
-    // Запасной вариант - статические товары
-    window.PRODUCTS = [...];
-  }
-}
+// ===== ТОВАРЫ (ИСПРАВЛЕННАЯ ВЕРСИЯ) =====
+let PRODUCTS = []; // Будет заполняться с сервера
 
+// Функция форматирования суммы
 function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
-const cardsEl = document.getElementById('cards');
-cardsEl.innerHTML = PRODUCTS.map(p => `
-  <div class="shop-card">
-    ${p.gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt=""></div>' : ''}
-    <div class="shop-top"><img src="${p.img}" alt="${p.name}"></div>
-    <div class="shop-bottom">
-      <div class="shop-name">${p.name}</div>
-      <button class="shop-buy" type="button" data-add="${p.id}">
-        <svg viewBox="0 0 24 24">
-          <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
-        </svg>
-        <div class="shop-price">${fmtRub(p.price)}</div>
-      </button>
+// Загрузка товаров с сервера
+async function loadProducts() {
+  try {
+    console.log('Загрузка товаров с:', `${API_URL}/api/products`);
+    const response = await fetch(`${API_URL}/api/products`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ошибка: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.products) {
+      PRODUCTS = data.products;
+      console.log(`Загружено ${PRODUCTS.length} товаров`);
+      renderProducts(); // Отрисовываем товары
+    } else {
+      console.error('Ошибка в данных:', data);
+      loadBackupProducts(); // Запасной вариант
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки товаров:', error);
+    loadBackupProducts(); // Запасной вариант
+  }
+}
+
+// Запасные товары если сервер недоступен
+function loadBackupProducts() {
+  PRODUCTS = [
+    { id: "c30", name: "30 кристаллов", price: 200, image_url: "https://i.imgur.com/s4K0WIP.png", is_gift: false },
+    { id: "c80", name: "80 кристаллов", price: 550, image_url: "https://i.imgur.com/XbnZKDb.png", is_gift: false },
+    { id: "c170", name: "170 кристаллов", price: 950, image_url: "https://i.imgur.com/X0JCmMQ.png", is_gift: false },
+    { id: "c360", name: "360 кристаллов", price: 1900, image_url: "https://i.imgur.com/7z8z9Rw.png", is_gift: false },
+    { id: "c950", name: "950 кристаллов", price: 4600, image_url: "https://i.imgur.com/zzBuIxF.png", is_gift: false },
+    { id: "c2000", name: "2000 кристаллов", price: 9000, image_url: "https://i.imgur.com/FTVnycE.png", is_gift: false },
+    { id: "bp", name: "Brawl Pass", price: 900, image_url: "https://i.imgur.com/FaFAL6l.png", is_gift: false },
+    { id: "bpplus", name: "Brawl Pass Plus", price: 1200, image_url: "https://i.imgur.com/21InnIc.png", is_gift: false },
+    { id: "up", name: "Улучшение до БП+", price: 550, image_url: "https://i.imgur.com/yhaR5Ho.png", is_gift: false },
+    { id: "bp_g", name: "Brawl Pass", price: 950, image_url: "https://i.imgur.com/FaFAL6l.png", is_gift: true },
+    { id: "bpp_g", name: "Brawl Pass Plus", price: 1250, image_url: "https://i.imgur.com/21InnIc.png", is_gift: true },
+    { id: "pro", name: "Pro Pass", price: 2200, image_url: "https://i.imgur.com/6808Xnp.png", is_gift: false }
+  ];
+  console.log('Используются запасные товары:', PRODUCTS.length);
+  renderProducts(); // Отрисовываем товары
+}
+
+// Отрисовка товаров
+function renderProducts() {
+  const cardsEl = document.getElementById('cards');
+  if (!cardsEl) {
+    console.error('Элемент #cards не найден!');
+    return;
+  }
+  
+  console.log('Отрисовка товаров:', PRODUCTS.length);
+  
+  cardsEl.innerHTML = PRODUCTS.map(p => `
+    <div class="shop-card">
+      ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+      <div class="shop-top"><img src="${p.image_url}" alt="${p.name}" loading="lazy"></div>
+      <div class="shop-bottom">
+        <div class="shop-name">${p.name}</div>
+        <button class="shop-buy" type="button" data-add="${p.id}">
+          <svg viewBox="0 0 24 24">
+            <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+          </svg>
+          <div class="shop-price">${fmtRub(p.price)}</div>
+        </button>
+      </div>
     </div>
-  </div>
-`).join('');
+  `).join('');
+  
+  // Проверяем что товары отрисовались
+  const allCards = cardsEl.querySelectorAll('.shop-card');
+  console.log('Отрисовано карточек:', allCards.length);
+}
 
 // ===== КОРЗИНА =====
 const CART_KEY = 'duck_cart_v1';
@@ -898,9 +946,9 @@ function renderCart(){
     if (!p) return '';
     return `
       <div class="cart-row">
-        <div class="cart-thumb"><img src="${p.img}" alt="${p.name}"></div>
+        <div class="cart-thumb"><img src="${p.image_url}" alt="${p.name}"></div>
         <div class="cart-info">
-          <div class="cart-name">${p.name}${p.gift ? ' 🎁' : ''}</div>
+          <div class="cart-name">${p.name}${p.is_gift ? ' 🎁' : ''}</div>
           <div class="cart-sub">${fmtRub(p.price)} • ${fmtRub(p.price * qty)}</div>
         </div>
         <div class="cart-qty">
@@ -945,10 +993,14 @@ function clearCart(){
 }
 
 // Добавление в корзину
-cardsEl.addEventListener('click', (e) => {
+document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-add]');
   if (!b) return;
-  addToCart(b.getAttribute('data-add'));
+  
+  const id = b.getAttribute('data-add');
+  console.log('Добавление в корзину:', id);
+  
+  addToCart(id);
   b.style.transform = 'scale(.98)';
   setTimeout(() => b.style.transform = '', 120);
   if (cartOverlay.classList.contains('open')) renderCart();
@@ -1044,6 +1096,8 @@ proceedToPayBtn.addEventListener('click', async () => {
   if (total < 10 || total > 10000) return;
   
   try {
+    console.log('Создание заказа, сумма:', total);
+    
     // Создаем заказ на сервере
     const response = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
@@ -1055,6 +1109,7 @@ proceedToPayBtn.addEventListener('click', async () => {
     });
     
     const data = await response.json();
+    console.log('Ответ от сервера:', data);
     
     if (data.success && data.paymentUrl) {
       currentOrderId = data.orderId;
@@ -1069,7 +1124,7 @@ proceedToPayBtn.addEventListener('click', async () => {
         window.open(data.paymentUrl, '_self');
       }, 2000);
     } else {
-      alert('Ошибка при создании заказа');
+      alert('Ошибка при создании заказа: ' + (data.error || 'неизвестная ошибка'));
     }
   } catch (error) {
     console.error('Ошибка:', error);
@@ -1194,9 +1249,21 @@ function checkPaymentResult() {
   }
 }
 
-// Инициализация
-updateBadge();
-checkPaymentResult();
+// ===== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ =====
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Сайт загружен, запускаем инициализацию...');
+  
+  // Загружаем товары сразу
+  loadProducts();
+  
+  // Обновляем корзину
+  updateBadge();
+  
+  // Проверяем результат оплаты
+  checkPaymentResult();
+  
+  console.log('Инициализация завершена');
+});
 
 // Очистить корзину
 document.getElementById('clearCart').addEventListener('click', clearCart);
