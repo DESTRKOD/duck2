@@ -803,24 +803,21 @@ continueBtn.addEventListener('click', () => {
   }, 2500);
 });
 
-// ===== ТОВАРЫ =====
-const PRODUCTS = [
-  { id:"c30",   name:"30 кристаллов",  price:200,  img:"https://i.imgur.com/s4K0WIP.png" },
-  { id:"c80",   name:"80 кристаллов",  price:550,  img:"https://i.imgur.com/XbnZKDb.png" },
-  { id:"c170",  name:"170 кристаллов", price:950,  img:"https://i.imgur.com/X0JCmMQ.png" },
-  { id:"c360",  name:"360 кристаллов", price:1900, img:"https://i.imgur.com/7z8z9Rw.png" },
-  { id:"c950",  name:"950 кристаллов", price:4600, img:"https://i.imgur.com/zzBuIxF.png" },
-  { id:"c2000", name:"2000 кристаллов",price:9000, img:"https://i.imgur.com/FTVnycE.png" },
-
-  { id:"bp",    name:"Brawl Pass",      price:900,  img:"https://i.imgur.com/FaFAL6l.png" },
-  { id:"bpplus",name:"Brawl Pass Plus", price:1200, img:"https://i.imgur.com/21InnIc.png" },
-  { id:"up",    name:"Улучшение до БП+",price:550,  img:"https://i.imgur.com/yhaR5Ho.png" },
-
-  { id:"bp_g",  name:"Brawl Pass",      price:950,  img:"https://i.imgur.com/FaFAL6l.png", gift:true },
-  { id:"bpp_g", name:"Brawl Pass Plus", price:1250, img:"https://i.imgur.com/21InnIc.png", gift:true },
-
-  { id:"pro",   name:"Pro Pass",        price:2200, img:"https://i.imgur.com/6808Xnp.png" }
-];
+async function loadProducts() {
+  try {
+    const response = await fetch(`${API_URL}/products`);
+    const data = await response.json();
+    
+    if (data.success) {
+      window.PRODUCTS = data.products;
+      renderProducts(); // Функция отрисовки товаров
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки товаров:', error);
+    // Запасной вариант - статические товары
+    window.PRODUCTS = [...];
+  }
+}
 
 function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
