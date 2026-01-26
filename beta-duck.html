@@ -159,6 +159,12 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(0,0,0,.35);
 }
 
 /* 🎁 ПОДАРОК */
@@ -228,8 +234,9 @@ html, body {
   border: 0;
   cursor: pointer;
   user-select: none;
+  transition: transform 0.15s ease;
 }
-.shop-buy:active { transform: scale(.98); }
+.shop-buy:active { transform: scale(.95); }
 .shop-buy svg {
   width: 20px;
   height: 20px;
@@ -306,16 +313,22 @@ html, body {
   padding: 16px 20px;
   font-size: 18px;
   border-radius: 16px;
-  border: 3px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.08);
   color: white;
   box-sizing: border-box;
   outline: none;
-  transition: border-color .2s ease;
+  transition: border-color .2s ease, background .2s ease;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .input-field:focus {
-  border-color: #fff;
+  border-color: #4fc3f7;
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+  transform: translateY(-1px);
 }
 
 .input-field::placeholder {
@@ -337,33 +350,135 @@ html, body {
   font-weight: 900;
   text-align: center;
   border-radius: 12px;
-  border: 3px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.08);
   color: white;
   outline: none;
-  transition: border-color .2s ease;
+  transition: border-color .2s ease, background .2s ease;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  letter-spacing: 0.5px;
 }
 
 .code-digit:focus {
-  border-color: #fff;
+  border-color: #4fc3f7;
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+  transform: translateY(-1px);
+}
+
+/* ===== ЕДИНЫЙ СТИЛЬ ДЛЯ ВСЕХ КНОПОК ===== */
+.button, .shop-buy, .cart-action, .qty-btn {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease;
 }
 
 /* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
 @media (max-width: 480px) {
   .cards {
     grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 14px 14px 34px;
+    gap: 12px;
+    padding: 12px 12px 24px;
   }
-  .shop-card { height: 260px; }
-  .shop-name { font-size: 16px; }
-  .shop-buy { min-width: 150px; height: 46px; }
-  .shop-price { font-size: 15px; }
+  
+  .shop-card {
+    height: 220px;
+  }
+  
+  .shop-top {
+    flex: 0 0 55%;
+    padding: 8px;
+  }
+  
+  .shop-bottom {
+    flex: 0 0 45%;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  
+  .shop-name {
+    font-size: 14px;
+    line-height: 1.1;
+  }
+  
+  .shop-buy {
+    min-width: 120px;
+    height: 40px;
+    padding: 0 10px;
+  }
+  
+  .shop-price {
+    font-size: 14px;
+  }
+  
+  .shop-buy svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .input-field {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
   
   .code-digit {
-    width: 45px;
-    height: 60px;
-    font-size: 28px;
+    width: 40px;
+    height: 50px;
+    font-size: 24px;
+  }
+  
+  .menu-header {
+    padding: 10px 12px;
+    font-size: 22px;
+  }
+  
+  .cart-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .button {
+    padding: 16px 40px;
+    font-size: 18px;
+    margin-top: 20px;
+  }
+  
+  .title {
+    font-size: 26px;
+    margin-top: 10px;
+  }
+  
+  .sticker {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* Еще меньше для очень маленьких экранов */
+@media (max-width: 360px) {
+  .shop-card {
+    height: 200px;
+  }
+  
+  .shop-name {
+    font-size: 13px;
+  }
+  
+  .shop-buy {
+    min-width: 100px;
+    height: 36px;
+  }
+  
+  .code-digit {
+    width: 36px;
+    height: 46px;
+    font-size: 22px;
+  }
+  
+  .button {
+    padding: 14px 32px;
+    font-size: 16px;
   }
 }
 
@@ -418,13 +533,32 @@ html, body {
   font-size: 22px;
   font-weight: 900;
   cursor: pointer;
+  transition: transform 0.15s ease;
 }
+.cart-close:active { transform: scale(.95); }
+
 .cart-body {
   max-height: min(56vh, 520px);
   overflow: auto;
   padding: 12px;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
 }
+
+.cart-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cart-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cart-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
 .cart-empty {
   padding: 18px 10px;
   text-align: center;
@@ -489,8 +623,9 @@ html, body {
   font-size: 18px;
   font-weight: 900;
   cursor: pointer;
+  transition: transform 0.15s ease;
 }
-.qty-btn:active { transform: scale(.97); }
+.qty-btn:active { transform: scale(.95); }
 .qty-num {
   min-width: 22px;
   text-align: center;
@@ -522,10 +657,11 @@ html, body {
   cursor: pointer;
   font-weight: 900;
   font-size: 15px;
+  transition: transform 0.15s ease;
 }
+.cart-action:active { transform: scale(.98); }
 .btn-clear { background: #eef0f6; }
 .btn-checkout { background: #000; color: #fff; }
-.cart-action:active { transform: scale(.98); }
 
 /* ===== ССЫЛКА ОПЛАТЫ ===== */
 .payment-link {
@@ -544,6 +680,25 @@ html, body {
 .payment-link:hover {
   transform: translateY(-3px);
   box-shadow: 0 16px 40px rgba(0,200,83,0.5);
+}
+
+/* ===== ЕДИНЫЙ СТИЛЬ ДЛЯ ТЕКСТА ===== */
+.title, .shop-name, .cart-name, .input-label {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: inherit;
+}
+
+.title {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ===== ЕДИНЫЕ АНИМАЦИИ ПЕРЕХОДОВ ===== */
+.screen, .menu, .cart-sheet {
+  transition: 
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
 </head>
@@ -716,46 +871,39 @@ html, body {
 
 <script>
 // ===== КОНФИГУРАЦИЯ =====
-const API_URL = 'https://duck-shop-sever.onrender.com'; // ТОЧНО ТАК КАК У ТЕБЯ В СЕРВЕРЕ
+const API_URL = 'https://duck-shop-sever.onrender.com';
 let currentOrderId = null;
 let currentPaymentUrl = null;
 let wrongCodeAttempts = 0;
 
+// ===== ФИКС ДЛЯ iOS =====
+if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+  document.addEventListener('touchstart', function() {}, {passive: true});
+  
+  function setVH() {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  }
+  
+  setVH();
+  window.addEventListener('resize', setVH);
+  window.addEventListener('orientationchange', setVH);
+}
+
 // ===== Lottie анимации =====
-lottie.loadAnimation({
-  container: document.getElementById('animHello'),
-  renderer: 'svg',
-  loop: true,
-  autoplay: true,
-  path: 'hello.json'
-});
-
-lottie.loadAnimation({
-  container: document.getElementById('animDownload'),
-  renderer: 'svg',
-  loop: true,
-  autoplay: true,
-  path: 'download.json'
-});
-
-lottie.loadAnimation({
-  container: document.getElementById('animMain'),
-  renderer: 'svg',
-  loop: true,
-  autoplay: true,
-  path: 'main.json'
-});
-
-// Загружаем анимации для всех экранов
 function loadAllLottieAnimations() {
   const animations = {
+    'animHello': 'hello.json',
+    'animDownload': 'download.json',
+    'animMain': 'main.json',
+    'animWaiting': 'waiting.json',
+    'animCheckout': 'checkout.json',
     'animBadPay': 'bad_pay.json',
     'animEnterEmail': 'enter_email.json',
     'animEnterCode': 'enter_code.json',
     'animBadCode': 'bad_code.json',
-    'animOrderReady': 'order_ready.json',
-    'animWaiting': 'waiting.json',
-    'animSupport': 'support.json'
+    'animSupport': 'support.json',
+    'animOrderReady': 'order_ready.json'
   };
 
   for (const [elementId, animationFile] of Object.entries(animations)) {
@@ -770,7 +918,7 @@ function loadAllLottieAnimations() {
           path: animationFile
         });
       } catch (e) {
-        console.log(`Анимация ${animationFile} не загружена, используй другую`);
+        console.log(`Анимация ${animationFile} не загружена`);
       }
     }
   }
@@ -778,8 +926,8 @@ function loadAllLottieAnimations() {
 
 // ===== Переключение экранов =====
 function show(id) {
-  const ids = ['hello', 'load', 'intro', 'menu', 'checkout', 'payment', 'badPay', 
-               'enterEmail', 'enterCode', 'badCode', 'support', 'orderReady', 'waiting'];
+  const ids = ['hello', 'load', 'intro', 'menu', 'waiting', 'checkout', 'payment', 'badPay', 
+               'enterEmail', 'enterCode', 'badCode', 'support', 'orderReady'];
   const current = ids.map(x => document.getElementById(x)).find(el => el.classList.contains('active'));
   const next = document.getElementById(id);
 
@@ -811,59 +959,44 @@ continueBtn.addEventListener('click', () => {
   }, 2500);
 });
 
-// ===== ТОВАРЫ (ИСПРАВЛЕННАЯ ВЕРСИЯ) =====
-let PRODUCTS = []; // Будет заполняться с сервера
+// ===== ТОВАРЫ =====
+let PRODUCTS = [];
 let productsCheckInterval = null;
 
-// Функция форматирования суммы
 function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
-// Загрузка товаров с сервера
 async function loadProducts() {
   try {
-    console.log('Загрузка товаров с:', `${API_URL}/api/products`);
     const response = await fetch(`${API_URL}/api/products`);
     
-    if (!response.ok) {
-      throw new Error(`HTTP ошибка: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
     
     const data = await response.json();
     
     if (data.success && data.products) {
       PRODUCTS = data.products;
-      console.log(`Загружено ${PRODUCTS.length} товаров`);
-      renderProducts(); // Отрисовываем товары
+      renderProducts();
     } else {
-      console.error('Ошибка в данных:', data);
-      loadBackupProducts(); // Запасной вариант
+      loadBackupProducts();
     }
   } catch (error) {
     console.error('Ошибка загрузки товаров:', error);
-    loadBackupProducts(); // Запасной вариант
+    loadBackupProducts();
   }
 }
 
-// Запускаем автообновление товаров
 function startAutoRefreshProducts() {
-  // Очищаем предыдущий интервал если есть
-  if (productsCheckInterval) {
-    clearInterval(productsCheckInterval);
-  }
+  if (productsCheckInterval) clearInterval(productsCheckInterval);
   
-  // Загружаем сразу
   loadProducts();
   
-  // И каждые 10 секунд
   productsCheckInterval = setInterval(() => {
-    console.log('Автообновление товаров...');
     loadProducts();
-  }, 10000); // 10 секунд
+  }, 10000);
 }
 
-// Запасные товары если сервер недоступен
 function loadBackupProducts() {
   PRODUCTS = [
     { id: "c30", name: "30 кристаллов", price: 200, image_url: "https://i.imgur.com/s4K0WIP.png", is_gift: false },
@@ -879,22 +1012,15 @@ function loadBackupProducts() {
     { id: "bpp_g", name: "Brawl Pass Plus", price: 1250, image_url: "https://i.imgur.com/21InnIc.png", is_gift: true },
     { id: "pro", name: "Pro Pass", price: 2200, image_url: "https://i.imgur.com/6808Xnp.png", is_gift: false }
   ];
-  console.log('Используются запасные товары:', PRODUCTS.length);
-  renderProducts(); // Отрисовываем товары
+  renderProducts();
 }
 
-// Отрисовка товаров
 function renderProducts() {
   const cardsEl = document.getElementById('cards');
-  if (!cardsEl) {
-    console.error('Элемент #cards не найден!');
-    return;
-  }
+  if (!cardsEl) return;
   
-  // Сохраняем текущий scroll position
   const scrollPos = cardsEl.scrollTop;
   
-  // Рендерим товары
   cardsEl.innerHTML = PRODUCTS.map(p => `
     <div class="shop-card">
       ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
@@ -911,10 +1037,7 @@ function renderProducts() {
     </div>
   `).join('');
   
-  // Восстанавливаем scroll position
   cardsEl.scrollTop = scrollPos;
-  
-  console.log('Отрисовано товаров:', PRODUCTS.length);
 }
 
 // ===== КОРЗИНА =====
@@ -1021,21 +1144,17 @@ function clearCart(){
   renderCart();
 }
 
-// Добавление в корзину
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-add]');
   if (!b) return;
   
   const id = b.getAttribute('data-add');
-  console.log('Добавление в корзину:', id);
-  
   addToCart(id);
   b.style.transform = 'scale(.98)';
   setTimeout(() => b.style.transform = '', 120);
   if (cartOverlay.classList.contains('open')) renderCart();
 });
 
-// Открыть/закрыть корзину
 document.getElementById('openCart').addEventListener('click', () => {
   cartOverlay.classList.add('open');
   cartOverlay.setAttribute('aria-hidden', 'false');
@@ -1052,7 +1171,6 @@ cartOverlay.addEventListener('click', (e) => {
   if (e.target === cartOverlay) closeCart();
 });
 
-// +/- в корзине
 cartBody.addEventListener('click', (e) => {
   const incBtn = e.target.closest('[data-inc]');
   const decBtn = e.target.closest('[data-dec]');
@@ -1060,7 +1178,6 @@ cartBody.addEventListener('click', (e) => {
   if (decBtn) dec(decBtn.getAttribute('data-dec'));
 });
 
-// Кнопка "Оформить" в корзине
 document.getElementById('checkoutBtn').addEventListener('click', () => {
   closeCart();
   showCheckout();
@@ -1097,7 +1214,6 @@ function showCheckout() {
   `;
   checkoutSummary.appendChild(totalDiv);
   
-  // Проверка суммы
   if (total < 10 || total > 10000) {
     proceedToPayBtn.disabled = true;
     amountError.style.display = 'block';
@@ -1114,7 +1230,6 @@ function showCheckout() {
   show('checkout');
 }
 
-// Кнопка "Назад в меню" из оформления
 document.getElementById('backToMenu').addEventListener('click', () => {
   show('menu');
 });
@@ -1125,9 +1240,6 @@ proceedToPayBtn.addEventListener('click', async () => {
   if (total < 10 || total > 10000) return;
   
   try {
-    console.log('Создание заказа, сумма:', total);
-    
-    // Создаем заказ на сервере
     const response = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1138,17 +1250,14 @@ proceedToPayBtn.addEventListener('click', async () => {
     });
     
     const data = await response.json();
-    console.log('Ответ от сервера:', data);
     
     if (data.success && data.paymentUrl) {
       currentOrderId = data.orderId;
       currentPaymentUrl = data.paymentUrl;
       
-      // Показываем экран оплаты
       show('payment');
       document.getElementById('manualPaymentLink').href = data.paymentUrl;
       
-      // Автоматический редирект через 2 секунды
       setTimeout(() => {
         window.open(data.paymentUrl, '_self');
       }, 2000);
@@ -1166,7 +1275,6 @@ document.getElementById('submitEmail').addEventListener('click', async () => {
   const emailInput = document.getElementById('emailInput');
   const email = emailInput.value.trim();
   
-  // Простая валидация email
   if (!email || !email.includes('@') || !email.includes('.')) {
     alert('Пожалуйста, введите корректный email');
     return;
@@ -1195,26 +1303,56 @@ document.getElementById('submitEmail').addEventListener('click', async () => {
   }
 });
 
-// ===== ВВОД КОДА =====
+// ===== ВВОД КОДА (ИСПРАВЛЕННЫЙ ДЛЯ iOS) =====
 function setupCodeInputs() {
   const inputs = document.querySelectorAll('.code-digit');
   inputs.forEach((input, index) => {
     input.value = '';
+    
+    // Фикс для iOS
+    input.setAttribute('inputmode', 'numeric');
+    input.setAttribute('pattern', '[0-9]*');
+    
     input.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      
       if (e.target.value.length === 1 && index < 5) {
         inputs[index + 1].focus();
       }
       
-      // Автоподтверждение при заполнении всех полей
       const allFilled = Array.from(inputs).every(i => i.value.length === 1);
       if (allFilled) {
-        document.getElementById('submitCode').focus();
+        setTimeout(() => {
+          document.getElementById('submitCode').focus();
+        }, 100);
       }
     });
     
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace' && !e.target.value && index > 0) {
         inputs[index - 1].focus();
+      }
+      
+      if (!/[\dBackspaceDeleteArrowLeftArrowRight]/.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+    
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pasteData = e.clipboardData.getData('text');
+      const numbers = pasteData.replace(/[^0-9]/g, '');
+      
+      if (numbers.length === 6) {
+        for (let i = 0; i < 6; i++) {
+          if (inputs[i]) {
+            inputs[i].value = numbers[i];
+          }
+        }
+        document.getElementById('submitCode').focus();
+      } else if (numbers.length === 1) {
+        input.value = numbers[0];
+        if (index < 5) inputs[index + 1].focus();
       }
     });
   });
@@ -1242,7 +1380,6 @@ document.getElementById('submitCode').addEventListener('click', async () => {
     const data = await response.json();
     
     if (data.success) {
-      // После ввода кода показываем "ожидание"
       if (data.status === 'waiting') {
         show('waiting');
         startCheckingOrderStatus();
@@ -1252,7 +1389,6 @@ document.getElementById('submitCode').addEventListener('click', async () => {
       
       clearCart();
     } else {
-      // Если код неверный - показываем существующий экран badCode
       show('badCode');
     }
   } catch (error) {
@@ -1261,18 +1397,13 @@ document.getElementById('submitCode').addEventListener('click', async () => {
   }
 });
 
-// Функция проверки статуса заказа
+// ===== ПРОВЕРКА СТАТУСА ЗАКАЗА =====
 let orderCheckInterval = null;
 function startCheckingOrderStatus() {
-  // Очищаем предыдущий интервал если есть
-  if (orderCheckInterval) {
-    clearInterval(orderCheckInterval);
-  }
+  if (orderCheckInterval) clearInterval(orderCheckInterval);
   
-  // Проверяем сразу
   checkOrderStatus();
   
-  // И каждые 5 секунд
   orderCheckInterval = setInterval(() => {
     checkOrderStatus();
   }, 5000);
@@ -1310,7 +1441,6 @@ function checkPaymentResult() {
   if (status === 'success' && orderId) {
     currentOrderId = orderId;
     
-    // Проверяем статус заказа на сервере
     fetch(`${API_URL}/api/order-status/${orderId}`)
       .then(res => res.json())
       .then(data => {
@@ -1327,7 +1457,6 @@ function checkPaymentResult() {
       })
       .catch(() => show('enterEmail'));
       
-    // Очищаем URL
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
   } else if (status === 'fail' && orderId) {
@@ -1341,21 +1470,10 @@ function checkPaymentResult() {
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Сайт загружен, запускаем инициализацию...');
-  
-  // Загружаем все анимации
   loadAllLottieAnimations();
-  
-  // Запускаем автообновление товаров
   startAutoRefreshProducts();
-  
-  // Обновляем корзину
   updateBadge();
-  
-  // Проверяем результат оплаты
   checkPaymentResult();
-  
-  console.log('Инициализация завершена');
 });
 
 // Очистить корзину
