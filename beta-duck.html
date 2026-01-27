@@ -290,6 +290,25 @@ html, body {
   border-top: 2px solid rgba(255,255,255,0.2);
 }
 
+/* ===== НОМЕР ЗАКАЗА ===== */
+.order-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffd700;
+  margin: 10px 0 20px 0;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
 .amount-error {
   color: #ff6b6b;
   font-weight: 800;
@@ -767,6 +786,7 @@ html, body {
   <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
     Ваш заказ обрабатывается администратором
   </div>
+  <div class="order-number" id="waitingOrderNumber"></div>
 </div>
 
 <!-- ОФОРМЛЕНИЕ ЗАКАЗА -->
@@ -799,6 +819,7 @@ html, body {
 <div id="badPay" class="screen">
   <div id="animBadPay" class="sticker"></div>
   <div class="title">Оплата не прошла</div>
+  <div class="order-number" id="badPayOrderNumber"></div>
   <button class="button" id="toMenuFromBadPay">Вернуться в меню</button>
 </div>
 
@@ -806,6 +827,7 @@ html, body {
 <div id="enterEmail" class="screen">
   <div id="animEnterEmail" class="sticker"></div>
   <div class="title">Введите ваш email</div>
+  <div class="order-number" id="emailOrderNumber"></div>
   <div class="input-group">
     <label class="input-label" for="emailInput">На этот email придёт информация о заказе</label>
     <input type="email" id="emailInput" class="input-field" placeholder="example@mail.ru">
@@ -817,6 +839,7 @@ html, body {
 <div id="enterCode" class="screen">
   <div id="animEnterCode" class="sticker"></div>
   <div class="title">Введите код из 6 цифр</div>
+  <div class="order-number" id="codeOrderNumber"></div>
   <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin-bottom: 20px;">
     Код должен прийти вам от администратора
   </div>
@@ -837,6 +860,7 @@ html, body {
 <div id="badCode" class="screen">
   <div id="animBadCode" class="sticker"></div>
   <div class="title">Неверный код</div>
+  <div class="order-number" id="badCodeOrderNumber"></div>
   <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0;">
     Пожалуйста, перепроверьте правильность кода и введите его повторно
   </div>
@@ -847,6 +871,7 @@ html, body {
 <div id="support" class="screen">
   <div id="animSupport" class="sticker"></div>
   <div class="title">Свяжитесь с поддержкой</div>
+  <div class="order-number" id="supportOrderNumber"></div>
   <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0;">
     Возникли проблемы с кодом? Напишите в поддержку для решения вопроса
   </div>
@@ -857,6 +882,7 @@ html, body {
 <div id="orderReady" class="screen">
   <div id="animOrderReady" class="sticker"></div>
   <div class="title">Заказ готов!</div>
+  <div class="order-number" id="readyOrderNumber"></div>
   <div style="color: rgba(255,255,255,0.9); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
     Ваш заказ успешно обработан. Вскоре вы получите свой товар!
   </div>
@@ -999,6 +1025,31 @@ const DEFAULT_PRODUCTS = [
 
 function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
+}
+
+// ===== ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ НОМЕРА ЗАКАЗА =====
+function updateOrderNumberElements(orderId) {
+  const orderNumber = `Заказ #${orderId}`;
+  
+  // Обновляем все элементы с номером заказа
+  const elements = [
+    'waitingOrderNumber',
+    'emailOrderNumber',
+    'codeOrderNumber',
+    'badCodeOrderNumber',
+    'supportOrderNumber',
+    'readyOrderNumber',
+    'badPayOrderNumber'
+  ];
+  
+  elements.forEach(elementId => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.textContent = orderNumber;
+    }
+  });
+  
+  console.log(`Обновлены номера заказов: ${orderNumber}`);
 }
 
 // ===== СОРТИРОВКА ДЛЯ ДЕСКТОПА =====
@@ -1448,6 +1499,9 @@ proceedToPayBtn.addEventListener('click', async () => {
       currentOrderId = data.orderId;
       currentPaymentUrl = data.paymentUrl;
       
+      // Обновляем номер заказа на всех экранах
+      updateOrderNumberElements(currentOrderId);
+      
       show('payment');
       document.getElementById('manualPaymentLink').href = data.paymentUrl;
       
@@ -1485,6 +1539,8 @@ document.getElementById('submitEmail').addEventListener('click', async () => {
     
     const data = await response.json();
     if (data.success) {
+      // Обновляем номер заказа перед показом экрана
+      updateOrderNumberElements(currentOrderId);
       show('enterCode');
       setupCodeInputs();
     } else {
@@ -1573,14 +1629,25 @@ document.getElementById('submitCode').addEventListener('click', async () => {
     
     if (data.success) {
       if (data.status === 'waiting') {
+        // Обновляем номер заказа перед показом экрана
+        updateOrderNumberElements(currentOrderId);
         show('waiting');
         startCheckingOrderStatus();
-      } else {
+      } else if (data.status === 'completed') {
+        // Обновляем номер заказа перед показом экрана
+        updateOrderNumberElements(currentOrderId);
         show('orderReady');
+      } else {
+        // Обновляем номер заказа перед показом экрана
+        updateOrderNumberElements(currentOrderId);
+        show('waiting');
+        startCheckingOrderStatus();
       }
       
       clearCart();
     } else {
+      // Обновляем номер заказа перед показом экрана
+      updateOrderNumberElements(currentOrderId);
       show('badCode');
     }
   } catch (error) {
@@ -1606,12 +1673,16 @@ async function checkOrderStatus() {
     const response = await fetch(`${API_URL}/api/order-status/${currentOrderId}`);
     const data = await response.json();
     
-    if (data.success && data.status === 'completed') {
-      if (orderCheckInterval) {
-        clearInterval(orderCheckInterval);
-        orderCheckInterval = null;
+    if (data.success) {
+      if (data.status === 'completed') {
+        if (orderCheckInterval) {
+          clearInterval(orderCheckInterval);
+          orderCheckInterval = null;
+        }
+        // Обновляем номер заказа перед показом экрана
+        updateOrderNumberElements(currentOrderId);
+        show('orderReady');
       }
-      show('orderReady');
     }
   } catch (error) {
     console.error('❌ Ошибка проверки статуса:', error);
@@ -1620,7 +1691,12 @@ async function checkOrderStatus() {
 
 // ===== КНОПКИ ВОЗВРАТА =====
 document.getElementById('toMenuFromBadPay').addEventListener('click', () => show('menu'));
-document.getElementById('retryCode').addEventListener('click', () => show('enterCode'));
+document.getElementById('retryCode').addEventListener('click', () => {
+  // Обновляем номер заказа перед показом экрана
+  updateOrderNumberElements(currentOrderId);
+  show('enterCode');
+  setupCodeInputs();
+});
 document.getElementById('toMenuFromSupport').addEventListener('click', () => show('menu'));
 document.getElementById('toMenuFromReady').addEventListener('click', () => show('menu'));
 
@@ -1633,26 +1709,32 @@ function checkPaymentResult() {
   if (status === 'success' && orderId) {
     currentOrderId = orderId;
     
+    // Обновляем номер заказа сразу
+    updateOrderNumberElements(currentOrderId);
+    
     fetch(`${API_URL}/api/order-status/${orderId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          if (data.status === 'support_needed') {
-            show('support');
-          } else if (data.status === 'waiting') {
-            show('waiting');
-            startCheckingOrderStatus();
+          if (data.status === 'completed') {
+            show('orderReady');
+          } else if (data.paymentStatus === 'confirmed') {
+            show('enterEmail');
           } else {
             show('enterEmail');
           }
         }
       })
-      .catch(() => show('enterEmail'));
+      .catch(() => {
+        show('enterEmail');
+      });
       
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
   } else if (status === 'fail' && orderId) {
     currentOrderId = orderId;
+    // Обновляем номер заказа перед показом экрана
+    updateOrderNumberElements(currentOrderId);
     show('badPay');
     
     const newUrl = window.location.pathname;
