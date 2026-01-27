@@ -1780,25 +1780,13 @@ function checkPaymentResult() {
     // Обновляем номер заказа сразу
     updateOrderNumberElements(currentOrderId);
     
-    fetch(`${API_URL}/api/order-status/${orderId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          if (data.status === 'completed') {
-            show('orderReady');
-          } else if (data.paymentStatus === 'confirmed') {
-            show('enterEmail');
-          } else {
-            show('enterEmail');
-          }
-        }
-      })
-      .catch(() => {
-        show('enterEmail');
-      });
-      
+    // ПОСЛЕ ОПЛАТЫ СРАЗУ НА ЭКРАН ВВОДА ПОЧТЫ
+    show('enterEmail');
+    
+    // Очищаем URL от параметров
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
+    
   } else if (status === 'fail' && orderId) {
     currentOrderId = orderId;
     // Обновляем номер заказа перед показом экрана
