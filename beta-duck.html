@@ -1736,30 +1736,15 @@ document.getElementById('submitCode').addEventListener('click', async () => {
     const data = await response.json();
     
     if (data.success) {
-      if (data.status === 'completed') {
-        // Обновляем номер заказа перед показом экрана
-        updateOrderNumberElements(currentOrderId);
-        show('orderReady');
-        clearCart();
-        clearSession();
-      } else if (data.status === 'waiting') {
-        // Обновляем номер заказа перед показом экрана
-        updateOrderNumberElements(currentOrderId);
-        show('waiting');
-        startCheckingOrderStatus();
-      } else {
-        // Обновляем номер заказа перед показом экрана
-        updateOrderNumberElements(currentOrderId);
-        show('waiting');
-        startCheckingOrderStatus();
-      }
+      // Обновляем номер заказа перед показом экрана ожидания
+      updateOrderNumberElements(currentOrderId);
+      show('waiting');
+      startCheckingOrderStatus();
     } else {
       if (data.status === 'support_needed') {
-        // Обновляем номер заказа перед показом экрана
         updateOrderNumberElements(currentOrderId);
         show('support');
       } else {
-        // Обновляем номер заказа перед показом экрана
         updateOrderNumberElements(currentOrderId);
         show('badCode');
       }
