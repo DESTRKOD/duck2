@@ -823,85 +823,6 @@ html, body {
   <button class="button" id="toMenuFromBadPay">Вернуться в меню</button>
 </div>
 
-<!-- ВВОД EMAIL -->
-<div id="enterEmail" class="screen">
-  <div id="animEnterEmail" class="sticker"></div>
-  <div class="title">Введите ваш email</div>
-  <div class="order-number" id="emailOrderNumber"></div>
-  <div class="input-group">
-    <label class="input-label" for="emailInput">На этот email придёт информация о заказе</label>
-    <input type="email" id="emailInput" class="input-field" placeholder="example@mail.ru">
-  </div>
-  <button class="button" id="submitEmail">Продолжить</button>
-</div>
-
-<!-- ОЖИДАНИЕ ЗАПРОСА КОДА -->
-<div id="waitCodeRequest" class="screen">
-  <div id="animWaitCodeRequest" class="sticker"></div>
-  <div class="title">Ожидайте запроса кода</div>
-  <div class="order-number" id="waitCodeOrderNumber"></div>
-  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
-    Администратору отправлен запрос на генерацию кода. Пожалуйста, ожидайте, когда администратор запросит код.
-  </div>
-  <div style="color: rgba(255,255,255,0.6); text-align: center; max-width: 400px; margin-top: 20px; font-size: 14px;">
-    Если прошло более 5 минут, свяжитесь с поддержкой.
-  </div>
-</div>
-
-<!-- ВВОД КОДА -->
-<div id="enterCode" class="screen">
-  <div id="animEnterCode" class="sticker"></div>
-  <div class="title">Введите код из 6 цифр</div>
-  <div class="order-number" id="codeOrderNumber"></div>
-  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin-bottom: 20px;">
-    Код должен прийти вам от администратора
-  </div>
-  
-  <div class="code-inputs">
-    <input type="text" maxlength="1" class="code-digit" data-index="0">
-    <input type="text" maxlength="1" class="code-digit" data-index="1">
-    <input type="text" maxlength="1" class="code-digit" data-index="2">
-    <input type="text" maxlength="1" class="code-digit" data-index="3">
-    <input type="text" maxlength="1" class="code-digit" data-index="4">
-    <input type="text" maxlength="1" class="code-digit" data-index="5">
-  </div>
-  
-  <button class="button" id="submitCode" style="margin-top: 30px;">Ввести код</button>
-</div>
-
-<!-- НЕВЕРНЫЙ КОД -->
-<div id="badCode" class="screen">
-  <div id="animBadCode" class="sticker"></div>
-  <div class="title">Неверный код</div>
-  <div class="order-number" id="badCodeOrderNumber"></div>
-  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0;">
-    Пожалуйста, перепроверьте правильность кода и введите его повторно
-  </div>
-  <button class="button" id="retryCode">Ввести код заново</button>
-</div>
-
-<!-- ПОДДЕРЖКА (если 2 раза неверный код) -->
-<div id="support" class="screen">
-  <div id="animSupport" class="sticker"></div>
-  <div class="title">Свяжитесь с поддержкой</div>
-  <div class="order-number" id="supportOrderNumber"></div>
-  <div style="color: rgba(255,255,255,0.8); text-align: center; max-width: 400px; margin: 20px 0;">
-    Возникли проблемы с кодом? Напишите в поддержку для решения вопроса
-  </div>
-  <button class="button" id="toMenuFromSupport">Вернуться в меню</button>
-</div>
-
-<!-- ЗАКАЗ ГОТОВ -->
-<div id="orderReady" class="screen">
-  <div id="animOrderReady" class="sticker"></div>
-  <div class="title">Заказ готов!</div>
-  <div class="order-number" id="readyOrderNumber"></div>
-  <div style="color: rgba(255,255,255,0.9); text-align: center; max-width: 400px; margin: 20px 0; font-size: 18px;">
-    Ваш заказ успешно обработан. Вскоре вы получите свой товар!
-  </div>
-  <button class="button" id="toMenuFromReady">Вернуться в меню</button>
-</div>
-
 <!-- КОРЗИНА -->
 <div class="cart-overlay" id="cartOverlay" aria-hidden="true">
   <div class="cart-sheet" role="dialog" aria-modal="true">
@@ -931,52 +852,6 @@ html, body {
 const API_URL = 'https://duck-shop-sever.onrender.com';
 let currentOrderId = null;
 let currentPaymentUrl = null;
-let wrongCodeAttempts = 0;
-let codeRequestCheckInterval = null;
-let orderStatusCheckInterval = null;
-
-// ===== ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ДЛЯ ВОССТАНОВЛЕНИЯ СЕАНСА =====
-const SESSION_KEY = 'duck_shop_session';
-let currentScreen = 'hello';
-
-function saveSession() {
-  const session = {
-    screen: currentScreen,
-    orderId: currentOrderId,
-    cart: cart,
-    email: document.getElementById('emailInput')?.value || ''
-  };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-}
-
-function loadSession() {
-  try {
-    const session = JSON.parse(localStorage.getItem(SESSION_KEY));
-    if (session) {
-      currentScreen = session.screen;
-      currentOrderId = session.orderId;
-      
-      if (session.cart) {
-        cart = session.cart;
-        saveCart();
-        updateBadge();
-      }
-      
-      if (session.email && document.getElementById('emailInput')) {
-        document.getElementById('emailInput').value = session.email;
-      }
-      
-      return session;
-    }
-  } catch (e) {
-    console.log('Ошибка загрузки сессии:', e);
-  }
-  return null;
-}
-
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
-}
 
 // ===== ФИКС ДЛЯ iOS =====
 if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
@@ -1000,13 +875,7 @@ function loadAllLottieAnimations() {
     'animMain': 'main.json',
     'animWaiting': 'waiting.json',
     'animCheckout': 'checkout.json',
-    'animBadPay': 'bad_pay.json',
-    'animEnterEmail': 'enter_email.json',
-    'animWaitCodeRequest': 'waiting.json',
-    'animEnterCode': 'enter_code.json',
-    'animBadCode': 'bad_code.json',
-    'animSupport': 'support.json',
-    'animOrderReady': 'order_ready.json'
+    'animBadPay': 'bad_pay.json'
   };
 
   for (const [elementId, animationFile] of Object.entries(animations)) {
@@ -1028,9 +897,8 @@ function loadAllLottieAnimations() {
 }
 
 // ===== Переключение экранов =====
-function show(id, saveToSession = true) {
-  const ids = ['hello', 'load', 'intro', 'menu', 'waiting', 'checkout', 'payment', 'badPay', 
-               'enterEmail', 'waitCodeRequest', 'enterCode', 'badCode', 'support', 'orderReady'];
+function show(id) {
+  const ids = ['hello', 'load', 'intro', 'menu', 'waiting', 'checkout', 'payment', 'badPay'];
   const current = ids.map(x => document.getElementById(x)).find(el => el.classList.contains('active'));
   const next = document.getElementById(id);
 
@@ -1042,20 +910,10 @@ function show(id, saveToSession = true) {
         el.classList.remove('active', 'leaving');
       });
       next.classList.add('active');
-      
-      if (saveToSession) {
-        currentScreen = id;
-        saveSession();
-      }
     }, 350);
   } else {
     ids.forEach(x => document.getElementById(x).classList.remove('active', 'leaving'));
     next.classList.add('active');
-    
-    if (saveToSession) {
-      currentScreen = id;
-      saveSession();
-    }
   }
 }
 
@@ -1065,7 +923,6 @@ continueBtn.addEventListener('pointerdown', () => continueBtn.classList.add('pre
 continueBtn.addEventListener('pointerup', () => continueBtn.classList.remove('pressed'));
 continueBtn.addEventListener('pointerleave', () => continueBtn.classList.remove('pressed'));
 continueBtn.addEventListener('click', () => {
-  clearSession(); // Очищаем сессию при начале нового потока
   show('load');
   setTimeout(() => {
     show('intro');
@@ -1104,12 +961,6 @@ function updateOrderNumberElements(orderId) {
   // Обновляем все элементы с номером заказа
   const elements = [
     'waitingOrderNumber',
-    'emailOrderNumber',
-    'waitCodeOrderNumber',
-    'codeOrderNumber',
-    'badCodeOrderNumber',
-    'supportOrderNumber',
-    'readyOrderNumber',
     'badPayOrderNumber'
   ];
   
@@ -1588,257 +1439,8 @@ proceedToPayBtn.addEventListener('click', async () => {
   }
 });
 
-// ===== ВВОД EMAIL =====
-document.getElementById('submitEmail').addEventListener('click', async () => {
-  const emailInput = document.getElementById('emailInput');
-  const email = emailInput.value.trim();
-  
-  if (!email || !email.includes('@') || !email.includes('.')) {
-    alert('Пожалуйста, введите корректный email');
-    return;
-  }
-  
-  try {
-    const response = await fetch(`${API_URL}/api/save-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        orderId: currentOrderId,
-        email: email
-      })
-    });
-    
-    const data = await response.json();
-    if (data.success) {
-      // Обновляем номер заказа перед показом экрана ожидания запроса кода
-      updateOrderNumberElements(currentOrderId);
-      show('waitCodeRequest');
-      // Запускаем проверку, когда админ запросит код
-      startCheckingForCodeRequest();
-      // Также запускаем проверку статуса заказа (на случай если админ сразу нажмет "сделать готовым")
-      startCheckingOrderStatus();
-    } else {
-      alert('Ошибка сохранения email');
-    }
-  } catch (error) {
-    console.error('❌ Ошибка:', error);
-    alert('Ошибка соединения с сервером');
-  }
-});
-
-// ===== ПРОВЕРКА ЗАПРОСА КОДА ОТ АДМИНА =====
-function startCheckingForCodeRequest() {
-  if (codeRequestCheckInterval) clearInterval(codeRequestCheckInterval);
-  
-  checkCodeRequest();
-  
-  codeRequestCheckInterval = setInterval(() => {
-    checkCodeRequest();
-  }, 5000);
-}
-
-async function checkCodeRequest() {
-  if (!currentOrderId) return;
-  
-  try {
-    const response = await fetch(`${API_URL}/api/check-code-request/${currentOrderId}`);
-    const data = await response.json();
-    
-    if (data.success && data.codeRequested) {
-      if (codeRequestCheckInterval) {
-        clearInterval(codeRequestCheckInterval);
-        codeRequestCheckInterval = null;
-      }
-      
-      // Обновляем номер заказа перед показом экрана ввода кода
-      updateOrderNumberElements(currentOrderId);
-      show('enterCode');
-      setupCodeInputs();
-    }
-  } catch (error) {
-    console.error('❌ Ошибка проверки запроса кода:', error);
-  }
-}
-
-// ===== ВВОД КОДА (ИСПРАВЛЕННЫЙ ДЛЯ iOS) =====
-function setupCodeInputs() {
-  const inputs = document.querySelectorAll('.code-digit');
-  inputs.forEach((input, index) => {
-    input.value = '';
-    
-    input.setAttribute('inputmode', 'numeric');
-    input.setAttribute('pattern', '[0-9]*');
-    
-    input.addEventListener('input', (e) => {
-      e.target.value = e.target.value.replace(/[^0-9]/g, '');
-      
-      if (e.target.value.length === 1 && index < 5) {
-        inputs[index + 1].focus();
-      }
-      
-      const allFilled = Array.from(inputs).every(i => i.value.length === 1);
-      if (allFilled) {
-        setTimeout(() => {
-          document.getElementById('submitCode').focus();
-        }, 100);
-      }
-    });
-    
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && !e.target.value && index > 0) {
-        inputs[index - 1].focus();
-      }
-      
-      if (!/[\dBackspaceDeleteArrowLeftArrowRight]/.test(e.key)) {
-        e.preventDefault();
-      }
-    });
-    
-    input.addEventListener('paste', (e) => {
-      e.preventDefault();
-      const pasteData = e.clipboardData.getData('text');
-      const numbers = pasteData.replace(/[^0-9]/g, '');
-      
-      if (numbers.length === 6) {
-        for (let i = 0; i < 6; i++) {
-          if (inputs[i]) {
-            inputs[i].value = numbers[i];
-          }
-        }
-        document.getElementById('submitCode').focus();
-      } else if (numbers.length === 1) {
-        input.value = numbers[0];
-        if (index < 5) inputs[index + 1].focus();
-      }
-    });
-  });
-}
-
-document.getElementById('submitCode').addEventListener('click', async () => {
-  const inputs = document.querySelectorAll('.code-digit');
-  const code = Array.from(inputs).map(input => input.value).join('');
-  
-  if (code.length !== 6 || !/^\d+$/.test(code)) {
-    alert('Пожалуйста, введите 6 цифр кода');
-    return;
-  }
-  
-  try {
-    const response = await fetch(`${API_URL}/api/verify-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        orderId: currentOrderId,
-        code: code
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // Обновляем номер заказа перед показом экрана ожидания
-      updateOrderNumberElements(currentOrderId);
-      show('waiting');
-      startCheckingOrderStatus();
-    } else {
-      if (data.status === 'support_needed') {
-        updateOrderNumberElements(currentOrderId);
-        show('support');
-      } else {
-        updateOrderNumberElements(currentOrderId);
-        show('badCode');
-      }
-    }
-  } catch (error) {
-    console.error('❌ Ошибка:', error);
-    alert('Ошибка соединения с сервером');
-  }
-});
-
-// ===== ПРОВЕРКА СТАТУСА ЗАКАЗА =====
-function startCheckingOrderStatus() {
-  if (orderStatusCheckInterval) clearInterval(orderStatusCheckInterval);
-  
-  checkOrderStatus();
-  
-  orderStatusCheckInterval = setInterval(() => {
-    checkOrderStatus();
-  }, 5000);
-}
-
-async function checkOrderStatus() {
-  if (!currentOrderId) return;
-  
-  try {
-    const response = await fetch(`${API_URL}/api/order-status/${currentOrderId}`);
-    const data = await response.json();
-    
-    if (data.success) {
-      // Если статус completed, переходим на экран готового заказа
-      if (data.status === 'completed') {
-        if (orderStatusCheckInterval) {
-          clearInterval(orderStatusCheckInterval);
-          orderStatusCheckInterval = null;
-        }
-        if (codeRequestCheckInterval) {
-          clearInterval(codeRequestCheckInterval);
-          codeRequestCheckInterval = null;
-        }
-        
-        // Обновляем номер заказа перед показом экрана
-        updateOrderNumberElements(currentOrderId);
-        show('orderReady');
-        clearCart();
-        clearSession();
-      }
-      // Если payment_status подтвержден, но статус заказа еще не waiting_code_request
-      // (админ мог нажать "готово" до ввода email)
-      else if (data.paymentStatus === 'confirmed' && 
-               data.status !== 'waiting_code_request' && 
-               data.status !== 'waiting' && 
-               data.status !== 'completed') {
-        
-        // Проверяем текущий экран
-        const currentScreenElement = document.querySelector('.screen.active');
-        if (currentScreenElement && 
-            (currentScreenElement.id === 'enterEmail' || 
-             currentScreenElement.id === 'waitCodeRequest')) {
-          
-          // Прямой переход на экран готового заказа
-          if (orderStatusCheckInterval) {
-            clearInterval(orderStatusCheckInterval);
-            orderStatusCheckInterval = null;
-          }
-          
-          updateOrderNumberElements(currentOrderId);
-          show('orderReady');
-          clearCart();
-          clearSession();
-        }
-      }
-    }
-  } catch (error) {
-    console.error('❌ Ошибка проверки статуса:', error);
-  }
-}
-
 // ===== КНОПКИ ВОЗВРАТА =====
 document.getElementById('toMenuFromBadPay').addEventListener('click', () => {
-  show('menu');
-});
-
-document.getElementById('retryCode').addEventListener('click', () => {
-  // Обновляем номер заказа перед показом экрана
-  updateOrderNumberElements(currentOrderId);
-  show('enterCode');
-  setupCodeInputs();
-});
-
-document.getElementById('toMenuFromSupport').addEventListener('click', () => {
-  show('menu');
-});
-
-document.getElementById('toMenuFromReady').addEventListener('click', () => {
   show('menu');
 });
 
@@ -1849,17 +1451,8 @@ function checkPaymentResult() {
   const orderId = urlParams.get('order');
   
   if (status === 'success' && orderId) {
-    currentOrderId = orderId;
-    
-    // Обновляем номер заказа сразу
-    updateOrderNumberElements(currentOrderId);
-    
-    // ПОСЛЕ ОПЛАТЫ СРАЗУ НА ЭКРАН ВВОДА ПОЧТЫ
-    show('enterEmail');
-    
-    // Очищаем URL от параметров
-    const newUrl = window.location.pathname;
-    window.history.replaceState({}, '', newUrl);
+    // РЕДИРЕКТ на отдельную страницу ввода email
+    window.location.href = `success.html?order=${orderId}`;
     
   } else if (status === 'fail' && orderId) {
     currentOrderId = orderId;
@@ -1872,66 +1465,6 @@ function checkPaymentResult() {
   }
 }
 
-// ===== ВОССТАНОВЛЕНИЕ СЕАНСА =====
-function restoreSession() {
-  const session = loadSession();
-  
-  if (session) {
-    // Восстанавливаем только если есть orderId (значит пользователь в процессе оформления)
-    if (session.orderId) {
-      currentOrderId = session.orderId;
-      updateOrderNumberElements(currentOrderId);
-      
-      // Показываем экран в зависимости от сохраненного состояния
-      switch(session.screen) {
-        case 'enterEmail':
-          show('enterEmail', false);
-          // Запускаем проверку статуса
-          startCheckingOrderStatus();
-          break;
-        case 'waitCodeRequest':
-          show('waitCodeRequest', false);
-          startCheckingForCodeRequest();
-          startCheckingOrderStatus();
-          break;
-        case 'enterCode':
-          show('enterCode', false);
-          setupCodeInputs();
-          startCheckingOrderStatus();
-          break;
-        case 'waiting':
-          show('waiting', false);
-          startCheckingOrderStatus();
-          break;
-        case 'badCode':
-          show('badCode', false);
-          break;
-        case 'support':
-          show('support', false);
-          break;
-        case 'orderReady':
-          show('orderReady', false);
-          break;
-        case 'badPay':
-          show('badPay', false);
-          break;
-        case 'checkout':
-          show('checkout', false);
-          break;
-        case 'payment':
-          show('payment', false);
-          break;
-        default:
-          // Если экран не из процесса оформления, показываем главное меню
-          show('menu', false);
-      }
-    } else {
-      // Если нет orderId, значит пользователь был просто в главном меню
-      show('menu', false);
-    }
-  }
-}
-
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Инициализация сайта...');
@@ -1939,11 +1472,6 @@ document.addEventListener('DOMContentLoaded', function() {
   startAutoRefreshProducts();
   updateBadge();
   checkPaymentResult();
-  
-  // Восстанавливаем сессию если пользователь был в процессе оформления
-  setTimeout(() => {
-    restoreSession();
-  }, 100);
 });
 
 // Очистить корзину
