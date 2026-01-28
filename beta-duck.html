@@ -1774,6 +1774,7 @@ async function checkOrderStatus() {
     const data = await response.json();
     
     if (data.success) {
+      // Если статус completed, переходим на экран готового заказа
       if (data.status === 'completed') {
         if (orderStatusCheckInterval) {
           clearInterval(orderStatusCheckInterval);
@@ -1783,11 +1784,37 @@ async function checkOrderStatus() {
           clearInterval(codeRequestCheckInterval);
           codeRequestCheckInterval = null;
         }
+        
         // Обновляем номер заказа перед показом экрана
         updateOrderNumberElements(currentOrderId);
         show('orderReady');
         clearCart();
         clearSession();
+      }
+      // Если payment_status подтвержден, но статус заказа еще не waiting_code_request
+      // (админ мог нажать "готово" до ввода email)
+      else if (data.paymentStatus === 'confirmed' && 
+               data.status !== 'waiting_code_request' && 
+               data.status !== 'waiting' && 
+               data.status !== 'completed') {
+        
+        // Проверяем текущий экран
+        const currentScreenElement = document.querySelector('.screen.active');
+        if (currentScreenElement && 
+            (currentScreenElement.id === 'enterEmail' || 
+             currentScreenElement.id === 'waitCodeRequest')) {
+          
+          // Прямой переход на экран готового заказа
+          if (orderStatusCheckInterval) {
+            clearInterval(orderStatusCheckInterval);
+            orderStatusCheckInterval = null;
+          }
+          
+          updateOrderNumberElements(currentOrderId);
+          show('orderReady');
+          clearCart();
+          clearSession();
+        }
       }
     }
   } catch (error) {
@@ -1859,6 +1886,8 @@ function restoreSession() {
       switch(session.screen) {
         case 'enterEmail':
           show('enterEmail', false);
+          // Запускаем проверку статуса
+          startCheckingOrderStatus();
           break;
         case 'waitCodeRequest':
           show('waitCodeRequest', false);
@@ -1868,6 +1897,7 @@ function restoreSession() {
         case 'enterCode':
           show('enterCode', false);
           setupCodeInputs();
+          startCheckingOrderStatus();
           break;
         case 'waiting':
           show('waiting', false);
