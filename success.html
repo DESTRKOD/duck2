@@ -248,8 +248,8 @@ document.getElementById('submitEmail').addEventListener('click', async () => {
       // Сохраняем email в localStorage для возможного восстановления
       localStorage.setItem(`email_${orderId}`, email);
       
-      // Перенаправляем на страницу ввода кода
-      window.location.href = `code.html?order=${orderId}`;
+      // ИЗМЕНЕНО: Перенаправляем на waiting_code.html вместо code.html
+      window.location.href = `waiting_code.html?order=${orderId}`;
     } else {
       throw new Error(data.error || 'Ошибка сохранения email');
     }
