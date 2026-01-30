@@ -112,6 +112,7 @@ html, body {
   padding: 12px 20px;
   background: rgba(255,255,255,0.1);
   border-radius: 12px;
+  text-align: center;
   animation: pulse 2s infinite;
 }
 
@@ -217,10 +218,20 @@ async function checkOrderStatus() {
     const data = await response.json();
     
     if (data.success) {
+      // 1. Если заказ завершен - перенаправляем на ready.html
       if (data.status === 'completed') {
-        // Заказ готов - перенаправляем на финальную страницу
         clearInterval(checkInterval);
         window.location.href = `ready.html?order=${orderId}`;
+      }
+      // 2. Если код был отмечен как неверный - перенаправляем на bad_enter_code.html
+      else if (data.hasCode === false && data.wrongAttempts > 0) {
+        clearInterval(checkInterval);
+        window.location.href = `bad_enter_code.html?order=${orderId}`;
+      }
+      // 3. Если превышено количество попыток - показываем сообщение
+      else if (data.maxAttemptsReached) {
+        clearInterval(checkInterval);
+        alert('Превышено количество попыток ввода кода. Свяжитесь с поддержкой.');
       }
     }
   } catch (error) {
