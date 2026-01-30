@@ -1,275 +1,354 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<title>Вход или Регистрация</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Авторизация - Duck Shop</title>
 <style>
-html, body {
+body {
   margin: 0;
-  width: 100%;
-  height: 100%;
+  padding: 20px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(180deg, #0b3c91 0%, #1565c0 55%, #42a5f5 100%);
+  min-height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
 }
 
-.screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  max-width: 500px;
+.container {
+  max-width: 400px;
   width: 100%;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   text-align: center;
 }
 
-.sticker {
-  width: 220px;
-  height: 220px;
-  margin-bottom: 30px;
+.logo {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: white;
+  font-weight: 900;
 }
 
-.title {
-  font-size: 32px;
-  font-weight: 800;
-  color: #fff;
-  text-align: center;
-  margin-bottom: 10px;
+h1 {
+  color: #0b3c91;
+  margin: 0 0 10px 0;
+  font-size: 28px;
 }
 
 .subtitle {
-  color: rgba(255,255,255,0.9);
-  text-align: center;
-  max-width: 400px;
-  margin-bottom: 40px;
+  color: #666;
+  margin-bottom: 30px;
   font-size: 16px;
-  line-height: 1.5;
 }
 
-.auth-options {
+.auth-buttons {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 320px;
-  margin-top: 20px;
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 .auth-btn {
+  padding: 16px 24px;
+  border-radius: 14px;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 18px 24px;
-  font-size: 18px;
-  font-weight: 700;
-  border-radius: 16px;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  text-decoration: none;
-  color: inherit;
-  background: #fff;
-  color: #0b3c91;
-  box-shadow: 0 12px 30px rgba(0,0,0,.3);
+  gap: 10px;
 }
 
 .auth-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0,0,0,.4);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
 .auth-btn:active {
   transform: translateY(0);
 }
 
-.btn-login {
+.btn-register {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.btn-register {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+.btn-login {
+  background: #000;
   color: white;
 }
 
 .btn-back {
-  margin-top: 30px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  border: 2px solid rgba(255,255,255,0.3);
-  box-shadow: none;
+  background: #f0f2f5;
+  color: #333;
 }
 
-.btn-back:hover {
-  background: rgba(255,255,255,0.2);
+.btn-icon {
+  font-size: 20px;
 }
 
-.auth-icon {
-  width: 24px;
-  height: 24px;
-  fill: currentColor;
-}
-
-.info-box {
-  background: rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 30px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.info-title {
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.info-text {
-  color: rgba(255,255,255,0.8);
+.info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
   font-size: 14px;
-  line-height: 1.4;
+  color: #666;
+  margin-top: 20px;
+  text-align: left;
+}
+
+.info h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.info li {
+  margin-bottom: 8px;
+}
+
+.telegram-notice {
+  background: #0088cc;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.loading {
+  display: none;
+  color: #0b3c91;
+  font-weight: 700;
+  margin-top: 20px;
+}
+
+.success {
+  display: none;
+  color: #28a745;
+  font-weight: 700;
+  margin-top: 20px;
+}
+
+.error {
+  display: none;
+  color: #dc3545;
+  font-weight: 700;
+  margin-top: 20px;
+  background: #ffe6e6;
+  padding: 10px;
+  border-radius: 8px;
 }
 
 @media (max-width: 480px) {
-  .title {
-    font-size: 26px;
-  }
-  
-  .sticker {
-    width: 180px;
-    height: 180px;
-    margin-bottom: 20px;
-  }
-  
-  .subtitle {
-    font-size: 15px;
-    margin-bottom: 30px;
+  .container {
+    padding: 20px;
+    margin: 20px;
   }
   
   .auth-btn {
-    padding: 16px 20px;
+    padding: 14px 20px;
     font-size: 16px;
-  }
-  
-  .auth-options {
-    gap: 12px;
-  }
-  
-  .info-box {
-    padding: 16px;
-  }
-}
-
-@media (max-width: 360px) {
-  .title {
-    font-size: 24px;
-  }
-  
-  .sticker {
-    width: 150px;
-    height: 150px;
-  }
-  
-  .auth-btn {
-    padding: 14px 18px;
-    font-size: 15px;
-  }
-  
-  .auth-icon {
-    width: 20px;
-    height: 20px;
   }
 }
 </style>
 </head>
-
 <body>
-<div class="screen">
-  <div id="animRegLog" class="sticker"></div>
+<div class="container">
+  <div class="logo">🦆</div>
+  <h1>Duck Shop</h1>
+  <div class="subtitle">Авторизация через Telegram</div>
   
-  <div class="title">Вход или Регистрация</div>
-  
-  <div class="subtitle">
-    Для покупок в нашем магазине необходима авторизация через Telegram. 
-    Это быстро, безопасно и не требует ввода пароля.
-  </div>
-  
-  <div class="auth-options">
-    <a href="login.html" class="auth-btn btn-login">
-      <svg class="auth-icon" viewBox="0 0 24 24">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg>
-      <span>Войти в аккаунт</span>
-    </a>
-    
-    <a href="reg.html" class="auth-btn btn-register">
-      <svg class="auth-icon" viewBox="0 0 24 24">
-        <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg>
+  <div class="auth-buttons">
+    <button class="auth-btn btn-register" id="registerBtn">
+      <span class="btn-icon">📝</span>
       <span>Зарегистрироваться</span>
-    </a>
+    </button>
     
-    <a href="beta-duck.html" class="auth-btn btn-back">
-      <svg class="auth-icon" viewBox="0 0 24 24">
-        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-      </svg>
+    <button class="auth-btn btn-login" id="loginBtn">
+      <span class="btn-icon">🔑</span>
+      <span>Войти</span>
+    </button>
+    
+    <button class="auth-btn btn-back" id="backBtn">
+      <span class="btn-icon">←</span>
       <span>Вернуться в магазин</span>
-    </a>
+    </button>
   </div>
   
-  <div class="info-box">
-    <div class="info-title">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-      </svg>
-      <span>Как это работает?</span>
-    </div>
-    <div class="info-text">
-      1. Выберите "Войти" или "Зарегистрироваться"<br>
-      2. Введите данные (для регистрации)<br>
-      3. Перейдите по ссылке в Telegram бота<br>
-      4. Бот подтвердит вашу личность<br>
-      5. Автоматически вернётесь в магазин
-    </div>
+  <div class="telegram-notice">
+    📱 Для авторизации потребуется Telegram
+  </div>
+  
+  <div class="info">
+    <h3>Как это работает:</h3>
+    <ul>
+      <li>Нажимаете кнопку "Зарегистрироваться" или "Войти"</li>
+      <li>Откроется Telegram с ботом магазина</li>
+      <li>Нажимаете "Start" в боте для подтверждения</li>
+      <li>Автоматически вернетесь в магазин</li>
+    </ul>
+  </div>
+  
+  <div class="loading" id="loading">
+    ⏳ Открываем Telegram...
+  </div>
+  
+  <div class="success" id="success">
+    ✅ Проверьте Telegram для завершения
+  </div>
+  
+  <div class="error" id="error">
+    ❌ Ошибка
   </div>
 </div>
 
 <script>
-// Загружаем анимацию
-lottie.loadAnimation({
-  container: document.getElementById('animRegLog'),
-  renderer: 'svg',
-  loop: true,
-  autoplay: true,
-  path: 'reg_log.json'
+const API_URL = 'https://duck-shop-sever.onrender.com';
+const SITE_URL = 'https://DESTRKOD.github.io/duck2';
+
+// Элементы
+const registerBtn = document.getElementById('registerBtn');
+const loginBtn = document.getElementById('loginBtn');
+const backBtn = document.getElementById('backBtn');
+const loading = document.getElementById('loading');
+const success = document.getElementById('success');
+const error = document.getElementById('error');
+const errorText = document.getElementById('errorText');
+
+// Назад в магазин
+backBtn.addEventListener('click', () => {
+  window.location.href = `${SITE_URL}/beta-duck.html`;
 });
 
-// Проверяем, есть ли уже авторизованный пользователь
-document.addEventListener('DOMContentLoaded', () => {
-  const savedUser = localStorage.getItem('duck_user');
-  if (savedUser) {
-    try {
-      const user = JSON.parse(savedUser);
-      // Можно добавить перенаправление на главную или показать сообщение
-      console.log('Пользователь уже авторизован:', user.username);
-    } catch (e) {
-      console.error('Ошибка парсинга пользователя:', e);
+// Регистрация
+registerBtn.addEventListener('click', async () => {
+  loading.style.display = 'block';
+  error.style.display = 'none';
+  
+  try {
+    const response = await fetch(`${API_URL}/api/auth/start-register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      loading.style.display = 'none';
+      success.style.display = 'block';
+      
+      // Открываем Telegram
+      setTimeout(() => {
+        window.open(data.telegramLink, '_blank');
+      }, 500);
+      
+      // Проверяем статус авторизации каждые 2 секунды
+      const checkInterval = setInterval(async () => {
+        const checkResponse = await fetch(`${API_URL}/api/auth/check/${data.token}`);
+        const checkData = await checkResponse.json();
+        
+        if (checkData.success && checkData.authenticated) {
+          clearInterval(checkInterval);
+          // Возвращаемся в магазин с токеном
+          window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
+        } else if (checkData.success && checkData.expired) {
+          clearInterval(checkInterval);
+          error.textContent = '❌ Время ожидания истекло. Попробуйте снова.';
+          error.style.display = 'block';
+          success.style.display = 'none';
+        }
+      }, 2000);
+      
+      // Останавливаем проверку через 5 минут
+      setTimeout(() => {
+        clearInterval(checkInterval);
+      }, 5 * 60 * 1000);
+      
+    } else {
+      loading.style.display = 'none';
+      error.textContent = `❌ ${data.error || 'Ошибка регистрации'}`;
+      error.style.display = 'block';
     }
+  } catch (err) {
+    loading.style.display = 'none';
+    error.textContent = '❌ Ошибка соединения с сервером';
+    error.style.display = 'block';
+    console.error('Ошибка регистрации:', err);
+  }
+});
+
+// Вход
+loginBtn.addEventListener('click', async () => {
+  loading.style.display = 'block';
+  error.style.display = 'none';
+  
+  try {
+    const response = await fetch(`${API_URL}/api/auth/start-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      loading.style.display = 'none';
+      success.style.display = 'block';
+      
+      // Открываем Telegram
+      setTimeout(() => {
+        window.open(data.telegramLink, '_blank');
+      }, 500);
+      
+      // Проверяем статус авторизации
+      const checkInterval = setInterval(async () => {
+        const checkResponse = await fetch(`${API_URL}/api/auth/check/${data.token}`);
+        const checkData = await checkResponse.json();
+        
+        if (checkData.success && checkData.authenticated) {
+          clearInterval(checkInterval);
+          window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
+        } else if (checkData.success && checkData.expired) {
+          clearInterval(checkInterval);
+          error.textContent = '❌ Время ожидания истекло. Попробуйте снова.';
+          error.style.display = 'block';
+          success.style.display = 'none';
+        }
+      }, 2000);
+      
+      setTimeout(() => {
+        clearInterval(checkInterval);
+      }, 5 * 60 * 1000);
+      
+    } else {
+      loading.style.display = 'none';
+      error.textContent = `❌ ${data.error || 'Ошибка входа'}`;
+      error.style.display = 'block';
+    }
+  } catch (err) {
+    loading.style.display = 'none';
+    error.textContent = '❌ Ошибка соединения с сервером';
+    error.style.display = 'block';
+    console.error('Ошибка входа:', err);
   }
 });
 </script>
