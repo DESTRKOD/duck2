@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Вход или Регистрация</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #0b3c91 0%, #1565c0 55%, #42a5f5 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.sticker {
+  width: 220px;
+  height: 220px;
+  margin-bottom: 30px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  max-width: 400px;
+  margin-bottom: 40px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.auth-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 20px;
+}
+
+.auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  color: #0b3c91;
+  box-shadow: 0 12px 30px rgba(0,0,0,.3);
+}
+
+.auth-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.4);
+}
+
+.auth-btn:active {
+  transform: translateY(0);
+}
+
+.btn-login {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-register {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.btn-back {
+  margin-top: 30px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: none;
+}
+
+.btn-back:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.auth-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.info-box {
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 30px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.info-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.info-text {
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 26px;
+  }
+  
+  .sticker {
+    width: 180px;
+    height: 180px;
+    margin-bottom: 20px;
+  }
+  
+  .subtitle {
+    font-size: 15px;
+    margin-bottom: 30px;
+  }
+  
+  .auth-btn {
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+  
+  .auth-options {
+    gap: 12px;
+  }
+  
+  .info-box {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .title {
+    font-size: 24px;
+  }
+  
+  .sticker {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .auth-btn {
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+  
+  .auth-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="screen">
+  <div id="animRegLog" class="sticker"></div>
+  
+  <div class="title">Вход или Регистрация</div>
+  
+  <div class="subtitle">
+    Для покупок в нашем магазине необходима авторизация через Telegram. 
+    Это быстро, безопасно и не требует ввода пароля.
+  </div>
+  
+  <div class="auth-options">
+    <a href="login.html" class="auth-btn btn-login">
+      <svg class="auth-icon" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      <span>Войти в аккаунт</span>
+    </a>
+    
+    <a href="reg.html" class="auth-btn btn-register">
+      <svg class="auth-icon" viewBox="0 0 24 24">
+        <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      <span>Зарегистрироваться</span>
+    </a>
+    
+    <a href="beta-duck.html" class="auth-btn btn-back">
+      <svg class="auth-icon" viewBox="0 0 24 24">
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+      </svg>
+      <span>Вернуться в магазин</span>
+    </a>
+  </div>
+  
+  <div class="info-box">
+    <div class="info-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+      </svg>
+      <span>Как это работает?</span>
+    </div>
+    <div class="info-text">
+      1. Выберите "Войти" или "Зарегистрироваться"<br>
+      2. Введите данные (для регистрации)<br>
+      3. Перейдите по ссылке в Telegram бота<br>
+      4. Бот подтвердит вашу личность<br>
+      5. Автоматически вернётесь в магазин
+    </div>
+  </div>
+</div>
+
+<script>
+// Загружаем анимацию
+lottie.loadAnimation({
+  container: document.getElementById('animRegLog'),
+  renderer: 'svg',
+  loop: true,
+  autoplay: true,
+  path: 'reg_log.json'
+});
+
+// Проверяем, есть ли уже авторизованный пользователь
+document.addEventListener('DOMContentLoaded', () => {
+  const savedUser = localStorage.getItem('duck_user');
+  if (savedUser) {
+    try {
+      const user = JSON.parse(savedUser);
+      // Можно добавить перенаправление на главную или показать сообщение
+      console.log('Пользователь уже авторизован:', user.username);
+    } catch (e) {
+      console.error('Ошибка парсинга пользователя:', e);
+    }
+  }
+});
+</script>
+</body>
+</html>
