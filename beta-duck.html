@@ -1329,7 +1329,7 @@ authBtn.addEventListener('click', function(e) {
   }
 });
 
-// Загрузка данных профиля
+// Загрузка данных профиля на сайте
 async function loadProfileData() {
   if (!currentUser) return;
   
@@ -1338,12 +1338,19 @@ async function loadProfileData() {
     const data = await response.json();
     
     if (data.success) {
-      // Обновляем информацию профиля
+      // Обновляем информацию профиля на сайте
       document.getElementById('profileName').textContent = data.user.username;
       document.getElementById('profileId').textContent = `TG ID: ${data.user.tgId}`;
-      document.getElementById('profileAvatar').textContent = data.user.username.charAt(0).toUpperCase();
       
-      // Обновляем список заказов
+      // Обновляем аватар
+      const avatar = document.getElementById('profileAvatar');
+      if (data.user.avatarUrl) {
+        avatar.innerHTML = `<img src="${data.user.avatarUrl}" alt="${data.user.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else if (data.user.username) {
+        avatar.textContent = data.user.username.charAt(0).toUpperCase();
+      }
+      
+      // Обновляем список заказов (остальной код без изменений)
       const ordersList = document.getElementById('ordersList');
       const ordersCount = document.getElementById('ordersCount');
       
@@ -1372,10 +1379,22 @@ async function loadProfileData() {
   }
 }
 
-function getPluralEnding(count) {
-  if (count % 10 === 1 && count % 100 !== 11) return '';
-  if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'а';
-  return 'ов';
+// Обновляем кнопку авторизации
+function updateAuthButton() {
+  if (currentUser) {
+    authBtnText.textContent = 'Профиль';
+    // Обновляем аватар в меню
+    const avatar = document.getElementById('profileAvatar');
+    if (avatar && currentUser.username) {
+      if (currentUser.avatarUrl) {
+        avatar.innerHTML = `<img src="${currentUser.avatarUrl}" alt="${currentUser.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+      }
+    }
+  } else {
+    authBtnText.textContent = 'Войти';
+  }
 }
 
 // Выход из системы
@@ -1944,20 +1963,31 @@ function checkPaymentResult() {
   }
 }
 
-// Проверка токена авторизации
+// Проверка токена авторизации на сайте
 async function verifyAuthToken(token) {
   try {
     const response = await fetch(`${API_URL}/api/auth/check/${token}`);
     const data = await response.json();
     
     if (data.success && data.authenticated) {
-      // Сохраняем пользователя
+      // Сохраняем пользователя с полными данными из сервера
       currentUser = data.user;
       localStorage.setItem('duck_user', JSON.stringify(data.user));
       updateAuthButton();
       
+      // Обновляем аватар сразу
+      const avatar = document.getElementById('profileAvatar');
+      if (avatar) {
+        // Используем аватар из Telegram или первую букву имени
+        if (currentUser.avatarUrl) {
+          avatar.innerHTML = `<img src="${currentUser.avatarUrl}" alt="${currentUser.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else if (currentUser.username) {
+          avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+        }
+      }
+      
       // Показываем уведомление
-      alert(`✅ Вход выполнен!\nДобро пожаловать, ${data.user.username}!`);
+      alert(`✅ Вход выполнен!\nДобро пожаловать, ${currentUser.username}!`);
     }
   } catch (error) {
     console.error('Ошибка проверки токена:', error);
