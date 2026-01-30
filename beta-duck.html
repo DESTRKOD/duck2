@@ -1403,6 +1403,7 @@ document.getElementById('backToMenuBtn').addEventListener('click', function() {
 let PRODUCTS = [];
 let productsCheckInterval = null;
 
+// Запасные товары (если сервер недоступен)
 const DEFAULT_PRODUCTS = [
   { id: "c30", name: "30 кристаллов", price: 200, image_url: "https://i.imgur.com/s4K0WIP.png", is_gift: false },
   { id: "c80", name: "80 кристаллов", price: 550, image_url: "https://i.imgur.com/XbnZKDb.png", is_gift: false },
@@ -1422,7 +1423,94 @@ function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
-// ... (остальной код функций для товаров, корзины и т.д. остается без изменений, но нужно обновить create-order)
+// ===== ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ НОМЕРА ЗАКАЗА =====
+function updateOrderNumberElements(orderId) {
+  const orderNumber = `Заказ #${orderId}`;
+  
+  // Обновляем все элементы с номером заказа
+  const elements = [
+    'waitingOrderNumber',
+    'badPayOrderNumber'
+  ];
+  
+  elements.forEach(elementId => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.textContent = orderNumber;
+    }
+  });
+  
+  console.log(`Обновлены номера заказов: ${orderNumber}`);
+}
+
+// ===== СОРТИРОВКА ДЛЯ ДЕСКТОПА =====
+function sortProductsForDesktop(products) {
+  const desktopOrder = [
+    "c30", "c80",     // 1 ряд: 30 | 80
+    "c170", "c360",   // 2 ряд: 170 | 360  
+    "c950", "c2000",  // 3 ряд: 950 | 2000
+    "bp", "bpplus",   // 4 ряд: бп | бп+
+    "bp_g", "bpp_g",  // 5 ряд: бп подарок | бп+ подарок
+    "pro",            // 6 ряд: pro (один в ряду)
+    "up"              // улучшение (в конце)
+  ];
+  
+  const orderedProducts = [];
+  const newProducts = products.filter(p => p.id.startsWith('prod_'));
+  const otherProducts = products.filter(p => !p.id.startsWith('prod_') && !desktopOrder.includes(p.id));
+  
+  // 1. Новые товары (первые)
+  newProducts.sort((a, b) => {
+    const getTimestamp = (id) => {
+      const match = id.match(/prod_(\d+)_/);
+      return match ? parseInt(match[1]) : 0;
+    };
+    return getTimestamp(b.id) - getTimestamp(a.id);
+  });
+  
+  // 2. Основные в порядке desktopOrder
+  desktopOrder.forEach(id => {
+    const product = products.find(p => p.id === id);
+    if (product) orderedProducts.push(product);
+  });
+  
+  // 3. Остальные товары (по цене)
+  otherProducts.sort((a, b) => a.price - b.price);
+  
+  return [...newProducts, ...orderedProducts, ...otherProducts];
+}
+
+// ===== СОРТИРОВКА ДЛЯ МОБИЛКИ =====
+function sortProductsForMobile(products) {
+  const mobileOrder = [
+    "c30", "c80", "c170", "c360", "c950", "c2000",
+    "bp", "bpplus", "bp_g", "bpp_g", "pro", "up"
+  ];
+  
+  const orderedProducts = [];
+  const newProducts = products.filter(p => p.id.startsWith('prod_'));
+  const otherProducts = products.filter(p => !p.id.startsWith('prod_') && !mobileOrder.includes(p.id));
+  
+  // 1. Новые товары
+  newProducts.sort((a, b) => {
+    const getTimestamp = (id) => {
+      const match = id.match(/prod_(\d+)_/);
+      return match ? parseInt(match[1]) : 0;
+    };
+    return getTimestamp(b.id) - getTimestamp(a.id);
+  });
+  
+  // 2. Основные в порядке mobileOrder
+  mobileOrder.forEach(id => {
+    const product = products.find(p => p.id === id);
+    if (product) orderedProducts.push(product);
+  });
+  
+  // 3. Остальные товары
+  otherProducts.sort((a, b) => a.price - b.price);
+  
+  return [...newProducts, ...orderedProducts, ...otherProducts];
+}
 
 async function loadProducts() {
   console.log('📦 Загрузка товаров с сервера...');
@@ -1472,7 +1560,120 @@ function startAutoRefreshProducts() {
   }, 10000);
 }
 
-// ... (функции sortProductsForDesktop, sortProductsForMobile, renderProducts остаются без изменений)
+function renderProducts() {
+  const cardsContainer = document.getElementById('cardsContainer');
+  if (!cardsContainer) return;
+  
+  const scrollPos = cardsContainer.scrollTop;
+  const isMobile = window.innerWidth <= 480;
+  
+  const productsToShow = isMobile ? 
+    sortProductsForMobile(PRODUCTS) : 
+    sortProductsForDesktop(PRODUCTS);
+  
+  cardsContainer.innerHTML = '';
+  
+  if (isMobile) {
+    // ===== МОБИЛЬНАЯ ВЕРСИЯ (один в ряд) =====
+    productsToShow.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'shop-card';
+      card.innerHTML = `
+        ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+        <div class="shop-top">
+          <img src="${p.image_url}" alt="${p.name}" loading="lazy">
+          ${p.id.startsWith('prod_') ? '<div class="new-badge">NEW</div>' : ''}
+        </div>
+        <div class="shop-bottom">
+          <div class="shop-name">${p.name}</div>
+          <button class="shop-buy" type="button" data-add="${p.id}">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+            </svg>
+            <div class="shop-price">${fmtRub(p.price)}</div>
+          </button>
+        </div>
+      `;
+      cardsContainer.appendChild(card);
+    });
+    
+  } else {
+    // ===== ДЕСКТОП ВЕРСИЯ (два в ряд с группировкой) =====
+    let currentRow = [];
+    
+    productsToShow.forEach((p, index) => {
+      currentRow.push(p);
+      
+      if (currentRow.length === 2 || index === productsToShow.length - 1) {
+        if (currentRow.length === 1 && currentRow[0].id === "pro") {
+          const row = document.createElement('div');
+          row.className = 'row-centered';
+          row.innerHTML = `
+            <div class="shop-card">
+              ${currentRow[0].is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+              <div class="shop-top">
+                <img src="${currentRow[0].image_url}" alt="${currentRow[0].name}" loading="lazy">
+                ${currentRow[0].id.startsWith('prod_') ? '<div class="new-badge">NEW</div>' : ''}
+              </div>
+              <div class="shop-bottom">
+                <div class="shop-name">${currentRow[0].name}</div>
+                <button class="shop-buy" type="button" data-add="${currentRow[0].id}">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+                  </svg>
+                  <div class="shop-price">${fmtRub(currentRow[0].price)}</div>
+                </button>
+              </div>
+            </div>
+          `;
+          cardsContainer.appendChild(row);
+        } else {
+          const row = document.createElement('div');
+          row.className = 'row-two';
+          
+          currentRow.forEach(p => {
+            row.innerHTML += `
+              <div class="shop-card">
+                ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+                <div class="shop-top">
+                  <img src="${p.image_url}" alt="${p.name}" loading="lazy">
+                  ${p.id.startsWith('prod_') ? '<div class="new-badge">NEW</div>' : ''}
+                </div>
+                <div class="shop-bottom">
+                  <div class="shop-name">${p.name}</div>
+                  <button class="shop-buy" type="button" data-add="${p.id}">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+                    </svg>
+                    <div class="shop-price">${fmtRub(p.price)}</div>
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+          
+          if (currentRow.length === 1) {
+            row.innerHTML += `<div class="shop-card empty-card"></div>`;
+          }
+          
+          cardsContainer.appendChild(row);
+        }
+        
+        currentRow = [];
+      }
+    });
+  }
+  
+  cardsContainer.scrollTop = scrollPos;
+  console.log(`📱 Отрисовано ${productsToShow.length} товаров (${isMobile ? 'мобильная' : 'десктоп'} версия)`);
+}
+
+// Обновляем при изменении размера окна
+window.addEventListener('resize', () => {
+  if (PRODUCTS.length > 0) {
+    renderProducts();
+  }
+});
 
 // ===== КОРЗИНА =====
 const CART_KEY = 'duck_cart_v1';
@@ -1668,7 +1869,7 @@ document.getElementById('backToMenu').addEventListener('click', () => {
   show('menu');
 });
 
-// ===== ОПЛАТА (ОБНОВЛЕННАЯ С ПРИВЯЗКОЙ К ПОЛЬЗОВАТЕЛЮ) =====
+// ===== ОПЛАТА =====
 proceedToPayBtn.addEventListener('click', async () => {
   const total = cartSum();
   if (total < 10 || total > 10000) return;
@@ -1690,6 +1891,7 @@ proceedToPayBtn.addEventListener('click', async () => {
       currentOrderId = data.orderId;
       currentPaymentUrl = data.paymentUrl;
       
+      // Обновляем номер заказа на всех экранах
       updateOrderNumberElements(currentOrderId);
       
       show('payment');
@@ -1719,10 +1921,12 @@ function checkPaymentResult() {
   const orderId = urlParams.get('order');
   
   if (status === 'success' && orderId) {
+    // РЕДИРЕКТ на отдельную страницу ввода email
     window.location.href = `success.html?order=${orderId}`;
     
   } else if (status === 'fail' && orderId) {
     currentOrderId = orderId;
+    // Обновляем номер заказа перед показом экрана
     updateOrderNumberElements(currentOrderId);
     show('badPay');
     
@@ -1760,25 +1964,6 @@ async function verifyAuthToken(token) {
   }
 }
 
-// ===== ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ НОМЕРА ЗАКАЗА =====
-function updateOrderNumberElements(orderId) {
-  const orderNumber = `Заказ #${orderId}`;
-  
-  const elements = [
-    'waitingOrderNumber',
-    'badPayOrderNumber'
-  ];
-  
-  elements.forEach(elementId => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      element.textContent = orderNumber;
-    }
-  });
-  
-  console.log(`Обновлены номера заказов: ${orderNumber}`);
-}
-
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Инициализация сайта...');
@@ -1791,7 +1976,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Очистить корзину
 document.getElementById('clearCart').addEventListener('click', clearCart);
-
 </script>
 </body>
 </html>
