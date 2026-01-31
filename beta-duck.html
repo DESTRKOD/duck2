@@ -877,6 +877,19 @@ html, body {
   box-shadow: 0 16px 40px rgba(0,200,83,0.5);
 }
 
+
+/* ===== АНИМАЦИЯ ПОЯВЛЕНИЯ ТОВАРОВ ===== */
+.shop-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.shop-card.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ===== ЭКРАН ПРОФИЛЯ ===== */
 .profile-screen {
   padding: 20px;
@@ -1277,16 +1290,11 @@ function show(id) {
       });
       next.classList.add('active');
       
-      // Если показываем меню, сначала ждем загрузки товаров
+      // Если показываем меню - скрываем товары до загрузки
       if (id === 'menu') {
-        // Скрываем контейнер товаров пока они не загрузились
         const cardsContainer = document.getElementById('cardsContainer');
         if (cardsContainer) {
-          cardsContainer.style.opacity = '0';
-          setTimeout(() => {
-            cardsContainer.style.opacity = '1';
-            cardsContainer.style.transition = 'opacity 0.5s ease';
-          }, 300);
+          cardsContainer.innerHTML = '<div style="color: white; text-align: center; padding: 40px;">Загрузка товаров...</div>';
         }
       }
       
@@ -1299,15 +1307,11 @@ function show(id) {
     ids.forEach(x => document.getElementById(x).classList.remove('active', 'leaving'));
     next.classList.add('active');
     
-    // Если показываем меню, сначала ждем загрузки товаров
+    // Если показываем меню - скрываем товары до загрузки
     if (id === 'menu') {
       const cardsContainer = document.getElementById('cardsContainer');
       if (cardsContainer) {
-        cardsContainer.style.opacity = '0';
-        setTimeout(() => {
-          cardsContainer.style.opacity = '1';
-          cardsContainer.style.transition = 'opacity 0.5s ease';
-        }, 300);
+        cardsContainer.innerHTML = '<div style="color: white; text-align: center; padding: 40px;">Загрузка товаров...</div>';
       }
     }
     
@@ -1316,6 +1320,139 @@ function show(id) {
       loadProfileData();
     }
   }
+}
+
+
+function renderProducts() {
+  const cardsContainer = document.getElementById('cardsContainer');
+  if (!cardsContainer) return;
+  
+  // Показываем индикатор загрузки
+  cardsContainer.innerHTML = '<div style="color: white; text-align: center; padding: 40px;">Загрузка товаров...</div>';
+  
+  // Используем requestAnimationFrame для асинхронного рендеринга
+  requestAnimationFrame(() => {
+    const scrollPos = cardsContainer.scrollTop;
+    const isMobile = window.innerWidth <= 480;
+    
+    const productsToShow = isMobile ? 
+      sortProductsForMobile(PRODUCTS) : 
+      sortProductsForDesktop(PRODUCTS);
+    
+    // Очищаем контейнер
+    cardsContainer.innerHTML = '';
+    
+    if (isMobile) {
+      // ===== МОБИЛЬНАЯ ВЕРСИЯ =====
+      productsToShow.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'shop-card';
+        card.style.opacity = '0';
+        card.style.animation = 'cardAppear 0.6s ease forwards';
+        card.innerHTML = `
+          ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+          <div class="shop-top">
+            <img src="${p.image_url}" alt="${p.name}" loading="lazy">
+            ${p.id.startsWith('prod_') ? '<div class="new-badge">NEW</div>' : ''}
+          </div>
+          <div class="shop-bottom">
+            <div class="shop-name">${p.name}</div>
+            <button class="shop-buy" type="button" data-add="${p.id}">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+              </svg>
+              <div class="shop-price">${fmtRub(p.price)}</div>
+            </button>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+        
+        // Анимация появления с задержкой
+        setTimeout(() => {
+          card.style.opacity = '1';
+        }, 100);
+      });
+      
+    } else {
+      // ===== ДЕСКТОП ВЕРСИЯ =====
+      let currentRow = [];
+      
+      productsToShow.forEach((p, index) => {
+        currentRow.push(p);
+        
+        if (currentRow.length === 2 || index === productsToShow.length - 1) {
+          if (currentRow.length === 1 && currentRow[0].id === "pro") {
+            const row = document.createElement('div');
+            row.className = 'row-centered';
+            row.innerHTML = `
+              <div class="shop-card">
+                ${currentRow[0].is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+                <div class="shop-top">
+                  <img src="${currentRow[0].image_url}" alt="${currentRow[0].name}" loading="lazy">
+                  ${currentRow[0].id.startsWith('prod_') ? '<div class="new-badge">NEW</div>' : ''}
+                </div>
+                <div class="shop-bottom">
+                  <div class="shop-name">${currentRow[0].name}</div>
+                  <button class="shop-buy" type="button" data-add="${currentRow[0].id}">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+                    </svg>
+                    <div class="shop-price">${fmtRub(currentRow[0].price)}</div>
+                  </button>
+                </div>
+              </div>
+            `;
+            cardsContainer.appendChild(row);
+          } else {
+            const row = document.createElement('div');
+            row.className = 'row-two';
+            
+            currentRow.forEach(p => {
+              row.innerHTML += `
+                <div class="shop-card">
+                  ${p.is_gift ? '<div class="gift"><img src="https://i.imgur.com/Tdajl7F.png" alt="🎁"></div>' : ''}
+                  <div class="shop-top">
+                    <img src="${p.image_url}" alt="${p.name}" loading="lazy">
+                    ${p.id.startsWith('prod_') ? '<div class="new-badge">NEW</div>' : ''}
+                  </div>
+                  <div class="shop-bottom">
+                    <div class="shop-name">${p.name}</div>
+                    <button class="shop-buy" type="button" data-add="${p.id}">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
+                      </svg>
+                      <div class="shop-price">${fmtRub(p.price)}</div>
+                    </button>
+                  </div>
+                </div>
+              `;
+            });
+            
+            if (currentRow.length === 1) {
+              row.innerHTML += `<div class="shop-card empty-card"></div>`;
+            }
+            
+            cardsContainer.appendChild(row);
+          }
+          
+          currentRow = [];
+        }
+      });
+    }
+    
+    cardsContainer.scrollTop = scrollPos;
+    console.log(`📱 Отрисовано ${productsToShow.length} товаров (${isMobile ? 'мобильная' : 'десктоп'} версия)`);
+    
+    // Анимация появления карточек
+    setTimeout(() => {
+      const cards = cardsContainer.querySelectorAll('.shop-card');
+      cards.forEach((card, index) => {
+        setTimeout(() => {
+          card.style.opacity = '1';
+        }, index * 50);
+      });
+    }, 100);
+  });
 }
 
 // ===== Кнопка "Продолжить" =====
@@ -1327,7 +1464,14 @@ continueBtn.addEventListener('click', () => {
   show('load');
   setTimeout(() => {
     show('intro');
-    setTimeout(() => show('menu'), 2000);
+    setTimeout(() => {
+      // Показываем меню магазина БЕЗ товаров
+      show('menu');
+      // Загружаем товары только после показа меню
+      setTimeout(() => {
+        loadProducts();
+      }, 500);
+    }, 2000);
   }, 2500);
 });
 
@@ -1378,6 +1522,30 @@ authBtn.addEventListener('click', function(e) {
   } else {
     // Перенаправляем на страницу входа/регистрации
     window.location.href = 'reg_log.html';
+  }
+});
+
+
+// В обработчиках возврата в меню
+document.getElementById('backToMenu').addEventListener('click', () => {
+  show('menu');
+  // Перезагружаем товары при возврате в меню
+  if (PRODUCTS.length > 0) {
+    renderProducts();
+  }
+});
+
+document.getElementById('toMenuFromBadPay').addEventListener('click', () => {
+  show('menu');
+  if (PRODUCTS.length > 0) {
+    renderProducts();
+  }
+});
+
+document.getElementById('backToMenuBtn').addEventListener('click', function() {
+  show('menu');
+  if (PRODUCTS.length > 0) {
+    renderProducts();
   }
 });
 
@@ -1636,10 +1804,10 @@ async function loadProducts() {
 function startAutoRefreshProducts() {
   console.log('🚀 Запуск автообновления товаров');
   
-  if (productsCheckInterval) clearInterval(productsCheckInterval);
-  
+  // Первоначальная загрузка
   loadProducts();
   
+  // Автообновление каждые 10 секунд
   productsCheckInterval = setInterval(() => {
     console.log('🔄 Автообновление товаров...');
     loadProducts();
@@ -2070,10 +2238,6 @@ document.addEventListener('DOMContentLoaded', function() {
   checkAuth(); // Проверяем авторизацию
   checkPaymentResult(); // Проверяем результат оплаты и авторизацию
   
-  // Загружаем товары с небольшой задержкой
-  setTimeout(() => {
-    startAutoRefreshProducts();
-  }, 1000);
 });
 
 // Очистить корзину
