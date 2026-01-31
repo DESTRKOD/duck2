@@ -1277,6 +1277,19 @@ function show(id) {
       });
       next.classList.add('active');
       
+      // Если показываем меню, сначала ждем загрузки товаров
+      if (id === 'menu') {
+        // Скрываем контейнер товаров пока они не загрузились
+        const cardsContainer = document.getElementById('cardsContainer');
+        if (cardsContainer) {
+          cardsContainer.style.opacity = '0';
+          setTimeout(() => {
+            cardsContainer.style.opacity = '1';
+            cardsContainer.style.transition = 'opacity 0.5s ease';
+          }, 300);
+        }
+      }
+      
       // Если показываем профиль - загружаем данные
       if (id === 'profile' && currentUser) {
         loadProfileData();
@@ -1285,6 +1298,18 @@ function show(id) {
   } else {
     ids.forEach(x => document.getElementById(x).classList.remove('active', 'leaving'));
     next.classList.add('active');
+    
+    // Если показываем меню, сначала ждем загрузки товаров
+    if (id === 'menu') {
+      const cardsContainer = document.getElementById('cardsContainer');
+      if (cardsContainer) {
+        cardsContainer.style.opacity = '0';
+        setTimeout(() => {
+          cardsContainer.style.opacity = '1';
+          cardsContainer.style.transition = 'opacity 0.5s ease';
+        }, 300);
+      }
+    }
     
     // Если показываем профиль - загружаем данные
     if (id === 'profile' && currentUser) {
@@ -1573,7 +1598,9 @@ async function loadProducts() {
     if (!response.ok) {
       console.log('⚠️ Сервер недоступен, использую запасные товары');
       PRODUCTS = [...DEFAULT_PRODUCTS];
-      renderProducts();
+      setTimeout(() => {
+        renderProducts();
+      }, 300);
       return;
     }
     
@@ -1586,16 +1613,23 @@ async function loadProducts() {
       
       PRODUCTS = [...serverProducts, ...missingDefaultProducts];
       console.log(`✅ Загружено ${serverProducts.length} товаров с сервера + ${missingDefaultProducts.length} запасных`);
-      renderProducts();
+      
+      setTimeout(() => {
+        renderProducts();
+      }, 300);
     } else {
       console.log('⚠️ Сервер вернул пустой список, использую запасные товары');
       PRODUCTS = [...DEFAULT_PRODUCTS];
-      renderProducts();
+      setTimeout(() => {
+        renderProducts();
+      }, 300);
     }
   } catch (error) {
     console.error('❌ Ошибка загрузки товаров:', error);
     PRODUCTS = [...DEFAULT_PRODUCTS];
-    renderProducts();
+    setTimeout(() => {
+      renderProducts();
+    }, 300);
   }
 }
 
@@ -1615,6 +1649,9 @@ function startAutoRefreshProducts() {
 function renderProducts() {
   const cardsContainer = document.getElementById('cardsContainer');
   if (!cardsContainer) return;
+  
+  // Сначала скрываем контейнер
+  cardsContainer.style.opacity = '0';
   
   const scrollPos = cardsContainer.scrollTop;
   const isMobile = window.innerWidth <= 480;
@@ -1718,6 +1755,12 @@ function renderProducts() {
   
   cardsContainer.scrollTop = scrollPos;
   console.log(`📱 Отрисовано ${productsToShow.length} товаров (${isMobile ? 'мобильная' : 'десктоп'} версия)`);
+  
+  // Показываем контейнер с анимацией после загрузки
+  setTimeout(() => {
+    cardsContainer.style.opacity = '1';
+    cardsContainer.style.transition = 'opacity 0.5s ease';
+  }, 100);
 }
 
 // Обновляем при изменении размера окна
@@ -2023,10 +2066,14 @@ async function verifyAuthToken(token) {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Инициализация сайта...');
   loadAllLottieAnimations();
-  startAutoRefreshProducts();
   updateBadge();
   checkAuth(); // Проверяем авторизацию
   checkPaymentResult(); // Проверяем результат оплаты и авторизацию
+  
+  // Загружаем товары с небольшой задержкой
+  setTimeout(() => {
+    startAutoRefreshProducts();
+  }, 1000);
 });
 
 // Очистить корзину
