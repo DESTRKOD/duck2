@@ -1035,6 +1035,25 @@ html, body {
   .profile-name {
     font-size: 20px;
   }
+
+  .profile-id {
+  font-size: 16px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.profile-id div:first-child {
+  font-weight: 600;
+  color: #fff;
+}
+
+.profile-id div:last-child {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 5px;
+}
   
   .profile-section {
     padding: 15px;
@@ -1077,13 +1096,12 @@ html, body {
   <div class="menu-header">
     <div class="menu-header-title">Главное меню</div>
     
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <a href="#" class="auth-btn" id="authBtn">
-        <svg viewBox="0 0 24 24">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>
-        <span id="authBtnText">Войти</span>
-      </a>
+   <a href="reg_log.html" class="auth-btn" id="authBtn">
+  <svg viewBox="0 0 24 24">
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+  </svg>
+  <span id="authBtnText">Войти</span>
+</a>
 
       <button class="cart-btn" id="openCart" aria-label="Корзина">
         <svg viewBox="0 0 24 24">
@@ -1104,7 +1122,10 @@ html, body {
   <div class="profile-header">
     <div class="profile-avatar" id="profileAvatar">U</div>
     <div class="profile-name" id="profileName">Пользователь</div>
-    <div class="profile-id" id="profileId">TG ID: ...</div>
+    <div class="profile-id" id="profileId">
+      <div>TG ID: ...</div>
+      <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">@username</div>
+    </div>
   </div>
   
   <div class="profile-section">
@@ -1304,12 +1325,18 @@ function checkAuth() {
 }
 
 function updateAuthButton() {
+  const authBtnText = document.getElementById('authBtnText');
+  
   if (currentUser) {
     authBtnText.textContent = 'Профиль';
-    // Обновляем аватар первой буквой имени
+    // Обновляем аватар в профиле
     const avatar = document.getElementById('profileAvatar');
     if (avatar && currentUser.username) {
-      avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+      if (currentUser.avatarUrl) {
+        avatar.innerHTML = `<img src="${currentUser.avatarUrl}" alt="${currentUser.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+      }
     }
   } else {
     authBtnText.textContent = 'Войти';
@@ -1329,7 +1356,7 @@ authBtn.addEventListener('click', function(e) {
   }
 });
 
-// Загрузка данных профиля на сайте
+// Загрузка данных профиля
 async function loadProfileData() {
   if (!currentUser) return;
   
@@ -1338,9 +1365,16 @@ async function loadProfileData() {
     const data = await response.json();
     
     if (data.success) {
-      // Обновляем информацию профиля на сайте
+      // Обновляем информацию профиля
       document.getElementById('profileName').textContent = data.user.username;
-      document.getElementById('profileId').textContent = `TG ID: ${data.user.tgId}`;
+      
+      // Обновляем ID профиля - добавляем и TG ID и username если есть
+      const profileIdElement = document.getElementById('profileId');
+      if (data.user.telegramUsername) {
+        profileIdElement.innerHTML = `TG ID: ${data.user.tgId}<br>@${data.user.telegramUsername}`;
+      } else {
+        profileIdElement.textContent = `TG ID: ${data.user.tgId}`;
+      }
       
       // Обновляем аватар
       const avatar = document.getElementById('profileAvatar');
@@ -1350,11 +1384,11 @@ async function loadProfileData() {
         avatar.textContent = data.user.username.charAt(0).toUpperCase();
       }
       
-      // Обновляем список заказов (остальной код без изменений)
+      // Обновляем список заказов
       const ordersList = document.getElementById('ordersList');
       const ordersCount = document.getElementById('ordersCount');
       
-      if (data.orders.length > 0) {
+      if (data.orders && data.orders.length > 0) {
         ordersCount.textContent = `${data.orders.length} заказ${getPluralEnding(data.orders.length)}`;
         
         ordersList.innerHTML = data.orders.map(order => `
@@ -1378,7 +1412,6 @@ async function loadProfileData() {
     console.error('Ошибка загрузки профиля:', error);
   }
 }
-
 // Обновляем кнопку авторизации
 function updateAuthButton() {
   if (currentUser) {
@@ -1963,7 +1996,7 @@ function checkPaymentResult() {
   }
 }
 
-// Проверка токена авторизации на сайте
+// Проверка токена авторизации
 async function verifyAuthToken(token) {
   try {
     const response = await fetch(`${API_URL}/api/auth/check/${token}`);
@@ -1975,19 +2008,11 @@ async function verifyAuthToken(token) {
       localStorage.setItem('duck_user', JSON.stringify(data.user));
       updateAuthButton();
       
-      // Обновляем аватар сразу
-      const avatar = document.getElementById('profileAvatar');
-      if (avatar) {
-        // Используем аватар из Telegram или первую букву имени
-        if (currentUser.avatarUrl) {
-          avatar.innerHTML = `<img src="${currentUser.avatarUrl}" alt="${currentUser.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-        } else if (currentUser.username) {
-          avatar.textContent = currentUser.username.charAt(0).toUpperCase();
-        }
-      }
-      
       // Показываем уведомление
       alert(`✅ Вход выполнен!\nДобро пожаловать, ${currentUser.username}!`);
+      
+      // Возвращаемся в меню
+      show('menu');
     }
   } catch (error) {
     console.error('Ошибка проверки токена:', error);
