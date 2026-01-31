@@ -1,25 +1,31 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Авторизация - Duck Shop</title>
+<meta charset="UTF-8" />
+<title>Авторизация</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <style>
-body {
+html, body {
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  width: 100%;
+  height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(180deg, #0b3c91 0%, #1565c0 55%, #42a5f5 100%);
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .container {
-  max-width: 400px;
   width: 100%;
-  background: white;
+  max-width: 400px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.auth-box {
+  background: rgba(255,255,255,0.95);
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -27,17 +33,9 @@ body {
 }
 
 .logo {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: white;
-  font-weight: 900;
+  font-size: 50px;
+  margin-bottom: 20px;
+  color: #0b3c91;
 }
 
 h1 {
@@ -50,13 +48,14 @@ h1 {
   color: #666;
   margin-bottom: 30px;
   font-size: 16px;
+  line-height: 1.4;
 }
 
 .auth-buttons {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .auth-btn {
@@ -75,7 +74,7 @@ h1 {
 
 .auth-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
 .auth-btn:active {
@@ -97,11 +96,7 @@ h1 {
   color: #333;
 }
 
-.btn-icon {
-  font-size: 20px;
-}
-
-.info {
+.info-box {
   background: #f8f9fa;
   padding: 15px;
   border-radius: 12px;
@@ -111,22 +106,22 @@ h1 {
   text-align: left;
 }
 
-.info h3 {
+.info-box h3 {
   margin: 0 0 10px 0;
   color: #333;
   font-size: 16px;
 }
 
-.info ul {
+.info-box ul {
   margin: 0;
   padding-left: 20px;
 }
 
-.info li {
+.info-box li {
   margin-bottom: 8px;
 }
 
-.telegram-notice {
+.telegram-note {
   background: #0088cc;
   color: white;
   padding: 12px;
@@ -140,13 +135,7 @@ h1 {
   color: #0b3c91;
   font-weight: 700;
   margin-top: 20px;
-}
-
-.success {
-  display: none;
-  color: #28a745;
-  font-weight: 700;
-  margin-top: 20px;
+  font-size: 16px;
 }
 
 .error {
@@ -155,14 +144,26 @@ h1 {
   font-weight: 700;
   margin-top: 20px;
   background: #ffe6e6;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.success {
+  display: none;
+  color: #28a745;
+  font-weight: 700;
+  margin-top: 20px;
+  font-size: 16px;
 }
 
 @media (max-width: 480px) {
   .container {
+    padding: 15px;
+  }
+  
+  .auth-box {
     padding: 20px;
-    margin: 20px;
   }
   
   .auth-btn {
@@ -172,53 +173,54 @@ h1 {
 }
 </style>
 </head>
+
 <body>
 <div class="container">
-  <div class="logo">🦆</div>
-  <h1>Duck Shop</h1>
-  <div class="subtitle">Авторизация через Telegram</div>
-  
-  <div class="auth-buttons">
-    <button class="auth-btn btn-register" id="registerBtn">
-      <span class="btn-icon">📝</span>
-      <span>Зарегистрироваться</span>
-    </button>
+  <div class="auth-box">
+    <div class="logo">🔐</div>
+    <h1>Авторизация</h1>
+    <div class="subtitle">Войдите или зарегистрируйтесь для доступа к магазину</div>
     
-    <button class="auth-btn btn-login" id="loginBtn">
-      <span class="btn-icon">🔑</span>
-      <span>Войти</span>
-    </button>
+    <div class="auth-buttons">
+      <button class="auth-btn btn-register" id="registerBtn">
+        <span>📝</span>
+        <span>Зарегистрироваться</span>
+      </button>
+      
+      <button class="auth-btn btn-login" id="loginBtn">
+        <span>🔑</span>
+        <span>Войти</span>
+      </button>
+      
+      <button class="auth-btn btn-back" id="backBtn">
+        <span>←</span>
+        <span>Вернуться в магазин</span>
+      </button>
+    </div>
     
-    <button class="auth-btn btn-back" id="backBtn">
-      <span class="btn-icon">←</span>
-      <span>Вернуться в магазин</span>
-    </button>
-  </div>
-  
-  <div class="telegram-notice">
-    📱 Для авторизации потребуется Telegram
-  </div>
-  
-  <div class="info">
-    <h3>Как это работает:</h3>
-    <ul>
-      <li>Нажимаете кнопку "Зарегистрироваться" или "Войти"</li>
-      <li>Откроется Telegram с ботом магазина</li>
-      <li>Нажимаете "Start" в боте для подтверждения</li>
-      <li>Автоматически вернетесь в магазин</li>
-    </ul>
-  </div>
-  
-  <div class="loading" id="loading">
-    ⏳ Открываем Telegram...
-  </div>
-  
-  <div class="success" id="success">
-    ✅ Проверьте Telegram для завершения
-  </div>
-  
-  <div class="error" id="error">
-    ❌ Ошибка
+    <div class="telegram-note">
+      📱 Для авторизации потребуется Telegram
+    </div>
+    
+    <div class="info-box">
+      <h3>Как это работает:</h3>
+      <ul>
+        <li>Нажимаете кнопку "Зарегистрироваться" или "Войти"</li>
+        <li>Откроется Telegram с ботом магазина</li>
+        <li>Нажимаете "Start" в боте для подтверждения</li>
+        <li>Автоматически вернетесь в магазин</li>
+      </ul>
+    </div>
+    
+    <div class="loading" id="loading">
+      ⏳ Открываем Telegram...
+    </div>
+    
+    <div class="success" id="success">
+      ✅ Проверьте Telegram для завершения
+    </div>
+    
+    <div class="error" id="error"></div>
   </div>
 </div>
 
@@ -233,7 +235,6 @@ const backBtn = document.getElementById('backBtn');
 const loading = document.getElementById('loading');
 const success = document.getElementById('success');
 const error = document.getElementById('error');
-const errorText = document.getElementById('errorText');
 
 // Назад в магазин
 backBtn.addEventListener('click', () => {
@@ -244,6 +245,7 @@ backBtn.addEventListener('click', () => {
 registerBtn.addEventListener('click', async () => {
   loading.style.display = 'block';
   error.style.display = 'none';
+  success.style.display = 'none';
   
   try {
     const response = await fetch(`${API_URL}/api/auth/start-register`, {
@@ -262,14 +264,13 @@ registerBtn.addEventListener('click', async () => {
         window.open(data.telegramLink, '_blank');
       }, 500);
       
-      // Проверяем статус авторизации каждые 2 секунды
+      // Проверяем статус авторизации
       const checkInterval = setInterval(async () => {
         const checkResponse = await fetch(`${API_URL}/api/auth/check/${data.token}`);
         const checkData = await checkResponse.json();
         
         if (checkData.success && checkData.authenticated) {
           clearInterval(checkInterval);
-          // Возвращаемся в магазин с токеном
           window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
         } else if (checkData.success && checkData.expired) {
           clearInterval(checkInterval);
@@ -279,7 +280,6 @@ registerBtn.addEventListener('click', async () => {
         }
       }, 2000);
       
-      // Останавливаем проверку через 5 минут
       setTimeout(() => {
         clearInterval(checkInterval);
       }, 5 * 60 * 1000);
@@ -301,6 +301,7 @@ registerBtn.addEventListener('click', async () => {
 loginBtn.addEventListener('click', async () => {
   loading.style.display = 'block';
   error.style.display = 'none';
+  success.style.display = 'none';
   
   try {
     const response = await fetch(`${API_URL}/api/auth/start-login`, {
