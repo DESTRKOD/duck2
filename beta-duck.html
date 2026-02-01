@@ -1339,7 +1339,6 @@ continueBtn.addEventListener('click', () => {
 const authBtn = document.getElementById('authBtn');
 const authBtnText = document.getElementById('authBtnText');
 
-// Проверка авторизации при загрузке
 function checkAuth() {
   const savedUser = localStorage.getItem('duck_user');
   if (savedUser) {
@@ -2013,7 +2012,6 @@ function checkPaymentResult() {
   }
 }
 
-// Проверка токена авторизации
 async function verifyAuthToken(token) {
   try {
     const response = await fetch(`${API_URL}/api/auth/check/${token}`);
@@ -2025,6 +2023,10 @@ async function verifyAuthToken(token) {
       localStorage.setItem('duck_user', JSON.stringify(data.user));
       updateAuthButton();
       
+      // Убираем токен из URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      
       // Показываем уведомление
       alert(`✅ Вход выполнен!\nДобро пожаловать, ${data.user.username}!`);
       
@@ -2035,7 +2037,6 @@ async function verifyAuthToken(token) {
     console.error('Ошибка проверки токена:', error);
   }
 }
-
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Инициализация сайта...');
