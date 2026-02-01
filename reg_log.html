@@ -17,6 +17,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation; /* Важно для мобильных */
 }
 
 /* ===== ЭКРАН АВТОРИЗАЦИИ ===== */
@@ -81,6 +82,9 @@ html, body {
   text-align: center;
   display: block;
   position: relative;
+  -webkit-tap-highlight-color: transparent; /* Убираем синий highlight на iOS */
+  -webkit-appearance: none; /* Убираем стандартные стили iOS */
+  appearance: none;
 }
 
 /* Эффект наведения (hover) */
@@ -91,6 +95,11 @@ html, body {
 
 /* Эффект нажатия (active/pressed) */
 .button.pressed {
+  transform: translateY(6px) scale(.95);
+  box-shadow: 0 6px 14px rgba(0,0,0,.35);
+}
+
+.button:active {
   transform: translateY(6px) scale(.95);
   box-shadow: 0 6px 14px rgba(0,0,0,.35);
 }
@@ -380,27 +389,51 @@ function showStatus(type, message = '') {
   }
 }
 
-// Настройка анимаций для кнопки
+// Упрощенная настройка анимаций для кнопки - работает на всех устройствах
 function setupButtonAnimations(button) {
-  button.addEventListener('pointerdown', () => button.classList.add('pressed'));
-  button.addEventListener('pointerup', () => button.classList.remove('pressed'));
-  button.addEventListener('pointerleave', () => button.classList.remove('pressed'));
+  // Убираем все старые обработчики
+  button.replaceWith(button.cloneNode(true));
   
-  button.addEventListener('mousedown', () => button.classList.add('pressed'));
-  button.addEventListener('mouseup', () => button.classList.remove('pressed'));
-  button.addEventListener('mouseleave', () => button.classList.remove('pressed'));
+  // Получаем новую ссылку на кнопку
+  const newButton = button.id ? document.getElementById(button.id) : button;
   
-  button.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    button.classList.add('pressed');
+  // Простой обработчик для всех устройств
+  newButton.addEventListener('mousedown', function() {
+    this.classList.add('pressed');
   });
   
-  button.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    button.classList.remove('pressed');
+  newButton.addEventListener('mouseup', function() {
+    this.classList.remove('pressed');
   });
   
-  button.addEventListener('touchcancel', () => button.classList.remove('pressed'));
+  newButton.addEventListener('mouseleave', function() {
+    this.classList.remove('pressed');
+  });
+  
+  // Для тач-устройств
+  newButton.addEventListener('touchstart', function(e) {
+    e.preventDefault(); // Предотвращаем скролл
+    this.classList.add('pressed');
+  }, { passive: false }); // Указываем, что не пассивный
+  
+  newButton.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    this.classList.remove('pressed');
+  }, { passive: false });
+  
+  newButton.addEventListener('touchcancel', function() {
+    this.classList.remove('pressed');
+  });
+  
+  // CSS-псевдокласс :active для подстраховки
+  newButton.addEventListener('click', function() {
+    // Убираем pressed через короткое время
+    setTimeout(() => {
+      this.classList.remove('pressed');
+    }, 150);
+  });
+  
+  return newButton;
 }
 
 // Проверка авторизации при загрузке страницы
@@ -462,56 +495,58 @@ function showAlreadyAuthScreen(user) {
 }
 
 // Назад в магазин
-backBtn.addEventListener('click', () => {
-  backBtn.classList.add('pressed');
-  setTimeout(() => {
-    backBtn.classList.remove('pressed');
-    window.location.href = `${SITE_URL}/beta-duck.html`;
-  }, 200);
-});
+function setupBackBtn() {
+  backBtn.addEventListener('click', function() {
+    this.classList.add('pressed');
+    setTimeout(() => {
+      this.classList.remove('pressed');
+      window.location.href = `${SITE_URL}/beta-duck.html`;
+    }, 200);
+  });
+}
 
 // Переход в магазин (для авторизованных)
-goToShopBtn.addEventListener('click', () => {
-  goToShopBtn.classList.add('pressed');
-  setTimeout(() => {
-    goToShopBtn.classList.remove('pressed');
-    window.location.href = `${SITE_URL}/beta-duck.html`;
-  }, 200);
-});
+function setupGoToShopBtn() {
+  goToShopBtn.addEventListener('click', function() {
+    this.classList.add('pressed');
+    setTimeout(() => {
+      this.classList.remove('pressed');
+      window.location.href = `${SITE_URL}/beta-duck.html`;
+    }, 200);
+  });
+}
 
 // Выход из аккаунта
-logoutBtn.addEventListener('click', async () => {
-  logoutBtn.classList.add('pressed');
-  
-  try {
-    await fetch(`${API_URL}/api/auth/logout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
+function setupLogoutBtn() {
+  logoutBtn.addEventListener('click', async function() {
+    this.classList.add('pressed');
     
-    localStorage.removeItem('duck_user');
-    
-    setTimeout(() => {
-      logoutBtn.classList.remove('pressed');
-      // Показываем обычный экран авторизации
-      alreadyAuthScreen.style.display = 'none';
-      authScreen.style.display = 'block';
-    }, 200);
-    
-  } catch (error) {
-    console.error('Ошибка выхода:', error);
-    logoutBtn.classList.remove('pressed');
-  }
-});
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      localStorage.removeItem('duck_user');
+      
+      setTimeout(() => {
+        this.classList.remove('pressed');
+        // Показываем обычный экран авторизации
+        alreadyAuthScreen.style.display = 'none';
+        authScreen.style.display = 'block';
+      }, 200);
+      
+    } catch (error) {
+      console.error('Ошибка выхода:', error);
+      this.classList.remove('pressed');
+    }
+  });
+}
 
 // Общая функция авторизации
 async function handleAuth(endpoint, button) {
+  // Визуальная обратная связь
   button.classList.add('pressed');
-  setTimeout(() => {
-    if (!button.classList.contains('loading-state')) {
-      button.classList.remove('pressed');
-    }
-  }, 150);
   
   button.disabled = true;
   button.classList.add('loading-state');
@@ -579,14 +614,18 @@ async function handleAuth(endpoint, button) {
 }
 
 // Регистрация
-registerBtn.addEventListener('click', () => {
-  handleAuth('start-register', registerBtn);
-});
+function setupRegisterBtn() {
+  registerBtn.addEventListener('click', () => {
+    handleAuth('start-register', registerBtn);
+  });
+}
 
 // Вход
-loginBtn.addEventListener('click', () => {
-  handleAuth('start-login', loginBtn);
-});
+function setupLoginBtn() {
+  loginBtn.addEventListener('click', () => {
+    handleAuth('start-login', loginBtn);
+  });
+}
 
 // Функция проверки токена
 async function verifyAuthToken(token) {
@@ -627,6 +666,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupButtonAnimations(goToShopBtn);
   setupButtonAnimations(logoutBtn);
   
+  // Настраиваем обработчики кликов
+  setupRegisterBtn();
+  setupLoginBtn();
+  setupBackBtn();
+  setupGoToShopBtn();
+  setupLogoutBtn();
+  
   // Проверяем авторизацию
   const isAuthed = await checkAuthOnLoad();
   
@@ -639,6 +685,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       await verifyAuthToken(authToken);
     }
   }
+  
+  // iOS фикс для скролла
+  document.addEventListener('touchmove', function(e) {
+    if (e.target.classList.contains('button')) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 });
 </script>
 </body>
