@@ -4,7 +4,9 @@
 <meta charset="UTF-8" />
 <title>Авторизация</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 <style>
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body {
   margin: 0;
   padding: 0;
@@ -15,101 +17,211 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
+/* ===== КОНТЕЙНЕРЫ ===== */
 .container {
   width: 100%;
   max-width: 400px;
   padding: 20px;
   box-sizing: border-box;
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .auth-box {
-  background: rgba(255,255,255,0.95);
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.logo {
-  font-size: 50px;
-  margin-bottom: 20px;
-  color: #0b3c91;
+/* ===== ЛОГО И ЗАГОЛОВКИ ===== */
+.logo-container {
+  margin-bottom: 24px;
+}
+
+.lottie-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
 }
 
 h1 {
   color: #0b3c91;
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: #666;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
   font-size: 16px;
   line-height: 1.4;
+  font-weight: 500;
 }
 
+/* ===== КНОПКИ АВТОРИЗАЦИИ ===== */
 .auth-buttons {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 25px;
+  gap: 12px;
+  margin-bottom: 28px;
 }
 
 .auth-btn {
-  padding: 16px 24px;
+  padding: 18px 24px;
   border-radius: 14px;
   border: none;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.auth-btn:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scale(25, 25);
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(40, 40);
+  }
 }
 
 .auth-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
 .auth-btn:active {
   transform: translateY(0);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Специфичные стили кнопок */
 .btn-register {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
 .btn-login {
   background: #000;
   color: white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn-back {
-  background: #f0f2f5;
+  background: rgba(255, 255, 255, 0.1);
   color: #333;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+}
+
+.auth-btn span:first-child {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* ===== ИНФОРМАЦИОННЫЕ БЛОКИ ===== */
+.telegram-note {
+  background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
+  color: white;
+  padding: 16px;
+  border-radius: 14px;
+  margin: 24px 0;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 8px 16px rgba(0, 136, 204, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 8px 16px rgba(0, 136, 204, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 24px rgba(0, 136, 204, 0.5);
+  }
+}
+
+.telegram-note::before {
+  content: '📱';
+  font-size: 20px;
 }
 
 .info-box {
   background: #f8f9fa;
-  padding: 15px;
-  border-radius: 12px;
+  padding: 20px;
+  border-radius: 16px;
   font-size: 14px;
   color: #666;
-  margin-top: 20px;
   text-align: left;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .info-box h3 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   color: #333;
   font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-box h3::before {
+  content: 'ℹ️';
 }
 
 .info-box ul {
@@ -118,57 +230,218 @@ h1 {
 }
 
 .info-box li {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  position: relative;
 }
 
-.telegram-note {
-  background: #0088cc;
-  color: white;
-  padding: 12px;
-  border-radius: 12px;
-  margin-top: 15px;
-  font-size: 14px;
+.info-box li::marker {
+  color: #0b3c91;
+  font-weight: bold;
 }
 
+/* ===== СТАТУСНЫЕ СООБЩЕНИЯ ===== */
 .loading {
   display: none;
   color: #0b3c91;
   font-weight: 700;
-  margin-top: 20px;
+  margin: 24px 0;
   font-size: 16px;
+  padding: 16px;
+  background: rgba(11, 60, 145, 0.1);
+  border-radius: 12px;
+  border-left: 4px solid #0b3c91;
+  animation: pulse 1.5s infinite;
 }
 
-.error {
-  display: none;
-  color: #dc3545;
-  font-weight: 700;
-  margin-top: 20px;
-  background: #ffe6e6;
-  padding: 10px 15px;
-  border-radius: 10px;
-  font-size: 14px;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .success {
   display: none;
   color: #28a745;
   font-weight: 700;
-  margin-top: 20px;
+  margin: 24px 0;
   font-size: 16px;
+  padding: 16px;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 12px;
+  border-left: 4px solid #28a745;
 }
 
+.error {
+  display: none;
+  color: #dc3545;
+  font-weight: 700;
+  margin: 24px 0;
+  background: rgba(220, 53, 69, 0.1);
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid #dc3545;
+  font-size: 14px;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 480px) {
   .container {
-    padding: 15px;
+    padding: 16px;
   }
   
   .auth-box {
-    padding: 20px;
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+  
+  .lottie-logo {
+    width: 70px;
+    height: 70px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .subtitle {
+    font-size: 15px;
+    margin-bottom: 28px;
   }
   
   .auth-btn {
-    padding: 14px 20px;
+    padding: 16px 20px;
     font-size: 16px;
+    gap: 10px;
+  }
+  
+  .telegram-note {
+    padding: 14px;
+    font-size: 14px;
+    margin: 20px 0;
+  }
+  
+  .info-box {
+    padding: 16px;
+    font-size: 13px;
+  }
+  
+  .auth-btn span:first-child {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding: 12px;
+  }
+  
+  .auth-box {
+    padding: 20px 16px;
+  }
+  
+  .auth-btn {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  
+  .lottie-logo {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* ===== ЭКРАН УСПЕШНОЙ АВТОРИЗАЦИИ ===== */
+.success-screen {
+  display: none;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.success-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.success-title {
+  color: #0b3c91;
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.success-message {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ===== */
+.auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.auth-btn.loading-state {
+  position: relative;
+  color: transparent;
+}
+
+.auth-btn.loading-state::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Плавный скролл */
+@media (hover: hover) {
+  * {
+    scroll-behavior: smooth;
   }
 }
 </style>
@@ -177,10 +450,14 @@ h1 {
 <body>
 <div class="container">
   <div class="auth-box">
-    <div class="logo">🔐</div>
-    <h1>Авторизация</h1>
-    <div class="subtitle">Войдите или зарегистрируйтесь для доступа к магазину</div>
+    <!-- Логотип с Lottie анимацией -->
+    <div class="logo-container">
+      <div id="lottie-lock" class="lottie-logo"></div>
+      <h1>Авторизация</h1>
+      <div class="subtitle">Войдите или зарегистрируйтесь для доступа к магазину</div>
+    </div>
     
+    <!-- Кнопки действий -->
     <div class="auth-buttons">
       <button class="auth-btn btn-register" id="registerBtn">
         <span>📝</span>
@@ -198,10 +475,12 @@ h1 {
       </button>
     </div>
     
+    <!-- Telegram уведомление -->
     <div class="telegram-note">
-      📱 Для авторизации потребуется Telegram
+      Для авторизации потребуется Telegram
     </div>
     
+    <!-- Информационный блок -->
     <div class="info-box">
       <h3>Как это работает:</h3>
       <ul>
@@ -212,6 +491,7 @@ h1 {
       </ul>
     </div>
     
+    <!-- Статусные сообщения -->
     <div class="loading" id="loading">
       ⏳ Открываем Telegram...
     </div>
@@ -221,6 +501,13 @@ h1 {
     </div>
     
     <div class="error" id="error"></div>
+    
+    <!-- Экран успешной авторизации (скрыт по умолчанию) -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Успешная авторизация!</div>
+      <div class="success-message">Вы будете перенаправлены в магазин...</div>
+    </div>
   </div>
 </div>
 
@@ -235,20 +522,69 @@ const backBtn = document.getElementById('backBtn');
 const loading = document.getElementById('loading');
 const success = document.getElementById('success');
 const error = document.getElementById('error');
+const successScreen = document.getElementById('successScreen');
+
+// Инициализация Lottie анимации
+function initLottieAnimations() {
+  try {
+    lottie.loadAnimation({
+      container: document.getElementById('lottie-lock'),
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'https://assets1.lottiefiles.com/packages/lf20_ktwnwv3m.json' // Анимация замка
+    });
+  } catch (e) {
+    console.log('Lottie анимация не загружена, используем статичную иконку');
+    document.getElementById('lottie-lock').innerHTML = '🔐';
+  }
+}
+
+// Показать/скрыть статусные сообщения
+function showStatus(type, message = '') {
+  loading.style.display = 'none';
+  success.style.display = 'none';
+  error.style.display = 'none';
+  
+  switch(type) {
+    case 'loading':
+      loading.style.display = 'block';
+      break;
+    case 'success':
+      success.style.display = 'block';
+      break;
+    case 'error':
+      error.textContent = message;
+      error.style.display = 'block';
+      break;
+  }
+}
+
+// Анимация нажатия кнопки
+function animateButton(button) {
+  button.classList.add('pressed');
+  setTimeout(() => button.classList.remove('pressed'), 200);
+}
 
 // Назад в магазин
 backBtn.addEventListener('click', () => {
-  window.location.href = `${SITE_URL}/beta-duck.html`;
+  animateButton(backBtn);
+  setTimeout(() => {
+    window.location.href = `${SITE_URL}/beta-duck.html`;
+  }, 200);
 });
 
-// Регистрация
-registerBtn.addEventListener('click', async () => {
-  loading.style.display = 'block';
-  error.style.display = 'none';
-  success.style.display = 'none';
+// Общая функция авторизации
+async function handleAuth(endpoint, button) {
+  // Визуальная обратная связь
+  animateButton(button);
+  button.disabled = true;
+  button.classList.add('loading-state');
+  
+  showStatus('loading');
   
   try {
-    const response = await fetch(`${API_URL}/api/auth/start-register`, {
+    const response = await fetch(`${API_URL}/api/auth/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -256,13 +592,22 @@ registerBtn.addEventListener('click', async () => {
     const data = await response.json();
     
     if (data.success) {
-      loading.style.display = 'none';
-      success.style.display = 'block';
+      showStatus('success');
       
-      // Открываем Telegram
+      // Сбрасываем состояние кнопки
+      button.disabled = false;
+      button.classList.remove('loading-state');
+      
+      // Показываем анимацию успеха
+      document.querySelector('.auth-buttons').style.display = 'none';
+      document.querySelector('.telegram-note').style.display = 'none';
+      document.querySelector('.info-box').style.display = 'none';
+      successScreen.style.display = 'block';
+      
+      // Открываем Telegram через 1 секунду
       setTimeout(() => {
         window.open(data.telegramLink, '_blank');
-      }, 500);
+      }, 1000);
       
       // Проверяем статус авторизации
       const checkInterval = setInterval(async () => {
@@ -271,87 +616,147 @@ registerBtn.addEventListener('click', async () => {
         
         if (checkData.success && checkData.authenticated) {
           clearInterval(checkInterval);
-          window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
+          
+          // Показываем финальное уведомление
+          document.querySelector('.success-icon').textContent = '🎉';
+          document.querySelector('.success-title').textContent = 'Авторизация успешна!';
+          document.querySelector('.success-message').textContent = 'Перенаправляем в магазин...';
+          
+          // Перенаправляем через 2 секунды
+          setTimeout(() => {
+            window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
+          }, 2000);
+          
         } else if (checkData.success && checkData.expired) {
           clearInterval(checkInterval);
-          error.textContent = '❌ Время ожидания истекло. Попробуйте снова.';
-          error.style.display = 'block';
-          success.style.display = 'none';
+          showStatus('error', '❌ Время ожидания истекло. Попробуйте снова.');
+          
+          // Восстанавливаем интерфейс
+          document.querySelector('.auth-buttons').style.display = 'flex';
+          document.querySelector('.telegram-note').style.display = 'flex';
+          document.querySelector('.info-box').style.display = 'block';
+          successScreen.style.display = 'none';
+          button.disabled = false;
+          button.classList.remove('loading-state');
         }
       }, 2000);
       
+      // Ограничиваем время ожидания 5 минутами
       setTimeout(() => {
         clearInterval(checkInterval);
       }, 5 * 60 * 1000);
       
     } else {
-      loading.style.display = 'none';
-      error.textContent = `❌ ${data.error || 'Ошибка регистрации'}`;
-      error.style.display = 'block';
+      button.disabled = false;
+      button.classList.remove('loading-state');
+      showStatus('error', `❌ ${data.error || 'Ошибка соединения'}`);
     }
   } catch (err) {
-    loading.style.display = 'none';
-    error.textContent = '❌ Ошибка соединения с сервером';
-    error.style.display = 'block';
-    console.error('Ошибка регистрации:', err);
+    button.disabled = false;
+    button.classList.remove('loading-state');
+    showStatus('error', '❌ Ошибка соединения с сервером');
+    console.error('Ошибка авторизации:', err);
   }
+}
+
+// Регистрация
+registerBtn.addEventListener('click', () => {
+  handleAuth('start-register', registerBtn);
 });
 
 // Вход
-loginBtn.addEventListener('click', async () => {
-  loading.style.display = 'block';
-  error.style.display = 'none';
-  success.style.display = 'none';
+loginBtn.addEventListener('click', () => {
+  handleAuth('start-login', loginBtn);
+});
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+  initLottieAnimations();
   
-  try {
-    const response = await fetch(`${API_URL}/api/auth/start-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+  // Добавляем анимации ripple эффекта для кнопок
+  const buttons = document.querySelectorAll('.auth-btn');
+  buttons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      const x = e.clientX - e.target.getBoundingClientRect().left;
+      const y = e.clientY - e.target.getBoundingClientRect().top;
+      
+      const ripple = document.createElement('span');
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.classList.add('ripple');
+      
+      this.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
     });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      loading.style.display = 'none';
-      success.style.display = 'block';
-      
-      // Открываем Telegram
-      setTimeout(() => {
-        window.open(data.telegramLink, '_blank');
-      }, 500);
-      
-      // Проверяем статус авторизации
-      const checkInterval = setInterval(async () => {
-        const checkResponse = await fetch(`${API_URL}/api/auth/check/${data.token}`);
-        const checkData = await checkResponse.json();
-        
-        if (checkData.success && checkData.authenticated) {
-          clearInterval(checkInterval);
-          window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
-        } else if (checkData.success && checkData.expired) {
-          clearInterval(checkInterval);
-          error.textContent = '❌ Время ожидания истекло. Попробуйте снова.';
-          error.style.display = 'block';
-          success.style.display = 'none';
-        }
-      }, 2000);
-      
-      setTimeout(() => {
-        clearInterval(checkInterval);
-      }, 5 * 60 * 1000);
-      
-    } else {
-      loading.style.display = 'none';
-      error.textContent = `❌ ${data.error || 'Ошибка входа'}`;
-      error.style.display = 'block';
-    }
-  } catch (err) {
-    loading.style.display = 'none';
-    error.textContent = '❌ Ошибка соединения с сервером';
-    error.style.display = 'block';
-    console.error('Ошибка входа:', err);
+  });
+  
+  // Проверяем параметры URL для автоматического редиректа
+  const urlParams = new URLSearchParams(window.location.search);
+  const authToken = urlParams.get('auth');
+  const autoAuth = urlParams.get('auto');
+  
+  if (authToken) {
+    // Если перешли с токеном, сразу проверяем
+    verifyAuthToken(authToken);
+  } else if (autoAuth === 'true') {
+    // Если нужно автоматически начать регистрацию
+    setTimeout(() => {
+      registerBtn.click();
+    }, 1000);
   }
 });
+
+// Функция проверки токена
+async function verifyAuthToken(token) {
+  try {
+    const response = await fetch(`${API_URL}/api/auth/check/${token}`);
+    const data = await response.json();
+    
+    if (data.success && data.authenticated) {
+      // Убираем параметры из URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      
+      // Показываем экран успеха
+      document.querySelector('.auth-box').style.display = 'none';
+      successScreen.style.display = 'block';
+      document.querySelector('.success-icon').textContent = '✅';
+      document.querySelector('.success-title').textContent = 'Добро пожаловать!';
+      document.querySelector('.success-message').textContent = `Привет, ${data.user.username}! Перенаправляем в магазин...`;
+      
+      // Перенаправляем через 2 секунды
+      setTimeout(() => {
+        window.location.href = `${SITE_URL}/beta-duck.html`;
+      }, 2000);
+    }
+  } catch (error) {
+    console.error('Ошибка проверки токена:', error);
+  }
+}
+
+// Добавляем стили для ripple эффекта
+const style = document.createElement('style');
+style.textContent = `
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+  }
+  
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(style);
 </script>
 </body>
 </html>
