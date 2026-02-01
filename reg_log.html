@@ -47,7 +47,7 @@ html, body {
 
 /* ===== ЗАГОЛОВОК ===== */
 .title {
-  margin: 0 0 30px 0;
+  margin: 0 0 25px 0;
   font-size: 24px;
   font-weight: 800;
   color: #fff;
@@ -57,7 +57,7 @@ html, body {
 @media (max-width: 480px) {
   .title {
     font-size: 22px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
   }
 }
 
@@ -65,8 +65,8 @@ html, body {
 .button {
   width: 100%;
   max-width: 280px;
-  margin: 12px 0;
-  padding: 20px 0;
+  margin: 8px 0; /* Уменьшил отступы между кнопками */
+  padding: 18px 0;
   font-size: 18px;
   font-weight: 800;
   background: #fff;
@@ -96,7 +96,7 @@ html, body {
 
 /* ===== ТЕКСТ ПОД КНОПКАМИ ===== */
 .telegram-note {
-  margin-top: 10px;
+  margin-top: 15px;
   color: rgba(255,255,255,0.8);
   font-size: 14px;
   text-align: center;
@@ -112,7 +112,7 @@ html, body {
 
 /* ===== СТАТУСНЫЕ СООБЩЕНИЯ ===== */
 .status-message {
-  margin-top: 20px;
+  margin-top: 15px;
   padding: 12px 16px;
   border-radius: 14px;
   font-size: 14px;
@@ -150,14 +150,14 @@ html, body {
   
   .title {
     font-size: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
   
   .button {
     padding: 16px 0;
     font-size: 16px;
     max-width: 260px;
-    margin: 10px 0;
+    margin: 6px 0; /* Еще меньше на маленьких экранах */
   }
   
   .telegram-note {
@@ -194,7 +194,7 @@ html, body {
   </div>
   
   <div class="status-message status-success" id="successMessage">
-    ✅ Проверьте Telegram для завершения
+    ⏳ Переходим в Telegram для завершения...
   </div>
   
   <div class="status-message status-error" id="errorMessage"></div>
@@ -253,9 +253,32 @@ backBtn.addEventListener('click', () => {
   window.location.href = `${SITE_URL}/beta-duck.html`;
 });
 
+// Функция для открытия Telegram
+function openTelegram(link) {
+  // Пробуем открыть в новом окне/вкладке
+  const newWindow = window.open(link, '_blank');
+  
+  // Если блокировщик всплывающих окон заблокировал, показываем инструкцию
+  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+    showStatus('error', '❌ Не удалось открыть Telegram. Пожалуйста, откройте ссылку вручную.');
+    
+    // Создаем ссылку для ручного открытия
+    const manualLink = document.createElement('a');
+    manualLink.href = link;
+    manualLink.target = '_blank';
+    manualLink.textContent = 'Нажмите здесь чтобы открыть Telegram';
+    manualLink.style.color = 'white';
+    manualLink.style.textDecoration = 'underline';
+    manualLink.style.marginTop = '10px';
+    manualLink.style.display = 'block';
+    
+    errorMessage.appendChild(manualLink);
+  }
+}
+
 // Общая функция авторизации
 async function handleAuth(endpoint, button) {
-  // Визуальная обратная связь - нажатие (через CSS :active)
+  // Визуальная обратная связь
   button.disabled = true;
   
   showStatus('loading');
@@ -268,42 +291,48 @@ async function handleAuth(endpoint, button) {
     
     const data = await response.json();
     
-    if (data.success) {
+    if (data.success && data.telegramLink) {
+      // Показываем сообщение о переходе в Telegram
       showStatus('success');
       
-      button.disabled = false;
-      
-      // Открываем Telegram через 1 секунду
+      // Ждем 1 секунду и открываем Telegram
       setTimeout(() => {
-        window.open(data.telegramLink, '_blank');
+        openTelegram(data.telegramLink);
       }, 1000);
       
       // Проверяем статус авторизации
       const checkInterval = setInterval(async () => {
-        const checkResponse = await fetch(`${API_URL}/api/auth/check/${data.token}`);
-        const checkData = await checkResponse.json();
-        
-        if (checkData.success && checkData.authenticated) {
-          clearInterval(checkInterval);
+        try {
+          const checkResponse = await fetch(`${API_URL}/api/auth/check/${data.token}`);
+          const checkData = await checkResponse.json();
           
-          // Сохраняем данные пользователя
-          localStorage.setItem('duck_user', JSON.stringify(checkData.user));
-          
-          // Перенаправляем в магазин
-          window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
-          
-        } else if (checkData.success && checkData.expired) {
-          clearInterval(checkInterval);
-          button.disabled = false;
-          showStatus('error', '❌ Время ожидания истекло. Попробуйте снова.');
+          if (checkData.success && checkData.authenticated) {
+            clearInterval(checkInterval);
+            
+            // Сохраняем данные пользователя
+            localStorage.setItem('duck_user', JSON.stringify(checkData.user));
+            
+            // Перенаправляем в магазин
+            window.location.href = `${SITE_URL}/beta-duck.html?auth=${data.token}`;
+            
+          } else if (checkData.success && checkData.expired) {
+            clearInterval(checkInterval);
+            button.disabled = false;
+            showStatus('error', '❌ Время ожидания истекло. Попробуйте снова.');
+          }
+        } catch (checkError) {
+          console.error('Ошибка проверки статуса:', checkError);
         }
       }, 2000);
       
-      setTimeout(() => clearInterval(checkInterval), 5 * 60 * 1000);
+      // Ограничиваем время ожидания 5 минутами
+      setTimeout(() => {
+        clearInterval(checkInterval);
+      }, 5 * 60 * 1000);
       
     } else {
       button.disabled = false;
-      showStatus('error', `❌ ${data.error || 'Ошибка соединения'}`);
+      showStatus('error', `❌ ${data.error || 'Ошибка получения ссылки на Telegram'}`);
     }
   } catch (err) {
     button.disabled = false;
