@@ -73,17 +73,25 @@ html, body {
   color: #0b3c91;
   border-radius: 18px;
   box-shadow: 0 16px 36px rgba(0,0,0,.45);
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: all .15s ease;
   user-select: none;
   cursor: pointer;
   border: none;
   outline: none;
   text-align: center;
   display: block;
+  position: relative;
 }
 
+/* Эффект наведения (hover) */
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0,0,0,.5);
+}
+
+/* Эффект нажатия (active/pressed) */
 .button.pressed {
-  transform: translateY(6px) scale(.9);
+  transform: translateY(6px) scale(.95);
   box-shadow: 0 6px 14px rgba(0,0,0,.35);
 }
 
@@ -209,6 +217,14 @@ html, body {
     max-width: 260px;
   }
 }
+
+/* Для устройств без hover (мобильные) */
+@media (hover: none) {
+  .button:hover {
+    transform: none;
+    box-shadow: 0 16px 36px rgba(0,0,0,.45);
+  }
+}
 </style>
 </head>
 
@@ -293,9 +309,9 @@ function showStatus(type, message = '') {
   }
 }
 
-// Анимация нажатия кнопки
-function setupButtonPress(button) {
-  // Добавляем эффект нажатия на pointerdown (касание/нажатие мыши)
+// Настройка анимаций для кнопки
+function setupButtonAnimations(button) {
+  // Эффект нажатия при pointerdown (касание/нажатие мыши)
   button.addEventListener('pointerdown', () => {
     button.classList.add('pressed');
   });
@@ -324,22 +340,37 @@ function setupButtonPress(button) {
   });
   
   // Для сенсорных экранов
-  button.addEventListener('touchstart', () => {
+  button.addEventListener('touchstart', (e) => {
+    e.preventDefault();
     button.classList.add('pressed');
   });
   
-  button.addEventListener('touchend', () => {
+  button.addEventListener('touchend', (e) => {
+    e.preventDefault();
     button.classList.remove('pressed');
   });
   
   button.addEventListener('touchcancel', () => {
     button.classList.remove('pressed');
   });
+  
+  // Эффект при фокусе (для клавиатурной навигации)
+  button.addEventListener('focus', () => {
+    button.style.outline = '2px solid #4fc3f7';
+    button.style.outlineOffset = '2px';
+  });
+  
+  button.addEventListener('blur', () => {
+    button.style.outline = 'none';
+  });
 }
 
 // Назад в магазин
 backBtn.addEventListener('click', () => {
+  // Эффект нажатия
+  backBtn.classList.add('pressed');
   setTimeout(() => {
+    backBtn.classList.remove('pressed');
     window.location.href = `${SITE_URL}/beta-duck.html`;
   }, 200);
 });
@@ -348,7 +379,11 @@ backBtn.addEventListener('click', () => {
 async function handleAuth(endpoint, button) {
   // Визуальная обратная связь - дополнительное нажатие
   button.classList.add('pressed');
-  setTimeout(() => button.classList.remove('pressed'), 120);
+  setTimeout(() => {
+    if (!button.classList.contains('loading-state')) {
+      button.classList.remove('pressed');
+    }
+  }, 150);
   
   button.disabled = true;
   button.classList.add('loading-state');
@@ -369,6 +404,7 @@ async function handleAuth(endpoint, button) {
       // Сбрасываем состояние кнопки
       button.disabled = false;
       button.classList.remove('loading-state');
+      button.classList.remove('pressed');
       
       // Открываем Telegram через 1 секунду
       setTimeout(() => {
@@ -390,6 +426,7 @@ async function handleAuth(endpoint, button) {
           clearInterval(checkInterval);
           button.disabled = false;
           button.classList.remove('loading-state');
+          button.classList.remove('pressed');
           showStatus('error', '❌ Время ожидания истекло. Попробуйте снова.');
         }
       }, 2000);
@@ -402,11 +439,13 @@ async function handleAuth(endpoint, button) {
     } else {
       button.disabled = false;
       button.classList.remove('loading-state');
+      button.classList.remove('pressed');
       showStatus('error', `❌ ${data.error || 'Ошибка соединения'}`);
     }
   } catch (err) {
     button.disabled = false;
     button.classList.remove('loading-state');
+    button.classList.remove('pressed');
     showStatus('error', '❌ Ошибка соединения с сервером');
     console.error('Ошибка авторизации:', err);
   }
@@ -426,10 +465,10 @@ loginBtn.addEventListener('click', () => {
 document.addEventListener('DOMContentLoaded', () => {
   initLottieAnimation();
   
-  // Настраиваем эффект нажатия для всех кнопок
-  setupButtonPress(registerBtn);
-  setupButtonPress(loginBtn);
-  setupButtonPress(backBtn);
+  // Настраиваем анимации для всех кнопок
+  setupButtonAnimations(registerBtn);
+  setupButtonAnimations(loginBtn);
+  setupButtonAnimations(backBtn);
   
   // Проверяем параметры URL для автоматического редиректа
   const urlParams = new URLSearchParams(window.location.search);
