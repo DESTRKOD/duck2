@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
 <style>
+/* ВСЕ СТИЛИ ОСТАЮТСЯ ТЕ ЖЕ, НЕ МЕНЯЕМ */
 html, body {
   margin: 0;
   width: 100%;
@@ -1252,12 +1253,156 @@ html, body {
 </div>
 
 <script>
-// ===== КОНФИГУРАЦИЯ =====
+// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
 const API_URL = 'https://duck-shop-sever.onrender.com';
 const ORDERS_KEY = 'duck_orders_v1';
+const CART_KEY = 'duck_cart_v1';
 let currentOrderId = null;
 let currentPaymentUrl = null;
 let currentUser = null;
+let PRODUCTS = [];
+let productsCheckInterval = null;
+let cart = {};
+
+// ===== ОСНОВНЫЕ ФУНКЦИИ =====
+function loadCart(){
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveCart(){
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+function cartCount(){
+  return Object.values(cart).reduce((a,b) => a + b, 0);
+}
+
+function cartSum(){
+  let sum = 0;
+  for (const [id, qty] of Object.entries(cart)) {
+    const p = PRODUCTS.find(x => x.id === id);
+    if (p) sum += p.price * qty;
+  }
+  return sum;
+}
+
+function fmtRub(n){
+  return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
+}
+
+// ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ =====
+function saveOrderToHistory(orderId, total, items) {
+  try {
+    const savedOrders = localStorage.getItem(ORDERS_KEY);
+    const orders = savedOrders ? JSON.parse(savedOrders) : [];
+    
+    const existingOrderIndex = orders.findIndex(order => order.id === orderId);
+    
+    if (existingOrderIndex !== -1) {
+      orders[existingOrderIndex] = {
+        ...orders[existingOrderIndex],
+        total: total,
+        items: { ...items },
+        status: 'pending',
+        date: new Date().toISOString()
+      };
+    } else {
+      const newOrder = {
+        id: orderId,
+        date: new Date().toISOString(),
+        total: total,
+        items: { ...items },
+        status: 'pending'
+      };
+      orders.unshift(newOrder);
+    }
+    
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+    console.log(`✅ Заказ #${orderId} сохранен в историю (${orders.length} всего)`);
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка сохранения заказа:', error);
+    return false;
+  }
+}
+
+function loadOrderHistory() {
+  try {
+    const savedOrders = localStorage.getItem(ORDERS_KEY);
+    if (!savedOrders) {
+      console.log('📁 Нет сохраненных заказов в localStorage');
+      return [];
+    }
+    
+    const orders = JSON.parse(savedOrders);
+    console.log(`📁 Загружено ${orders.length} заказов из localStorage`);
+    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return orders;
+  } catch (error) {
+    console.error('❌ Ошибка загрузки истории заказов:', error);
+    return [];
+  }
+}
+
+function updateOrderStatus(orderId, newStatus) {
+  try {
+    const orders = loadOrderHistory();
+    const orderIndex = orders.findIndex(order => order.id === orderId);
+    
+    if (orderIndex !== -1) {
+      orders[orderIndex].status = newStatus;
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+      console.log(`✅ Статус заказа #${orderId} обновлен на "${newStatus}"`);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('❌ Ошибка обновления статуса заказа:', error);
+    return false;
+  }
+}
+
+function updateOrderIdInHistory(oldId, newId) {
+  try {
+    const orders = loadOrderHistory();
+    const orderIndex = orders.findIndex(order => order.id === oldId);
+    
+    if (orderIndex !== -1) {
+      orders[orderIndex].id = newId;
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+      console.log(`🔄 ID заказа обновлен: ${oldId} → ${newId}`);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('❌ Ошибка обновления ID заказа:', error);
+    return false;
+  }
+}
+
+function removeOrderFromHistory(orderId) {
+  try {
+    const orders = loadOrderHistory();
+    const filteredOrders = orders.filter(order => order.id !== orderId);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredOrders));
+    console.log(`🗑️ Заказ #${orderId} удален из истории`);
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка удаления заказа:', error);
+    return false;
+  }
+}
+
+function getPluralEnding(count) {
+  if (count % 10 === 1 && count % 100 !== 11) return '';
+  if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'а';
+  return 'ов';
+}
 
 // ===== ФИКС ДЛЯ iOS =====
 if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
@@ -1360,11 +1505,16 @@ function show(id) {
 }
 
 // ===== Кнопка "Продолжить" =====
-const continueBtn = document.getElementById('continueBtn');
-continueBtn.addEventListener('pointerdown', () => continueBtn.classList.add('pressed'));
-continueBtn.addEventListener('pointerup', () => continueBtn.classList.remove('pressed'));
-continueBtn.addEventListener('pointerleave', () => continueBtn.classList.remove('pressed'));
-continueBtn.addEventListener('click', () => {
+document.getElementById('continueBtn').addEventListener('pointerdown', function() {
+  this.classList.add('pressed');
+});
+document.getElementById('continueBtn').addEventListener('pointerup', function() {
+  this.classList.remove('pressed');
+});
+document.getElementById('continueBtn').addEventListener('pointerleave', function() {
+  this.classList.remove('pressed');
+});
+document.getElementById('continueBtn').addEventListener('click', function() {
   show('load');
   setTimeout(() => {
     show('intro');
@@ -1373,9 +1523,6 @@ continueBtn.addEventListener('click', () => {
 });
 
 // ===== АВТОРИЗАЦИЯ =====
-const authBtn = document.getElementById('authBtn');
-const authBtnText = document.getElementById('authBtnText');
-
 function checkAuth() {
   const savedUser = localStorage.getItem('duck_user');
   if (savedUser) {
@@ -1390,6 +1537,9 @@ function checkAuth() {
 }
 
 function updateAuthButton() {
+  const authBtn = document.getElementById('authBtn');
+  const authBtnText = document.getElementById('authBtnText');
+  
   if (!authBtn || !authBtnText) return;
   
   if (currentUser) {
@@ -1412,163 +1562,63 @@ function updateAuthButton() {
   }
 }
 
-authBtn.addEventListener('click', function(e) {
+document.getElementById('authBtn').addEventListener('click', function(e) {
   if (currentUser) {
     e.preventDefault();
     show('profile');
   }
 });
 
-// ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ =====
-function saveOrderToHistory(orderId, total, items) {
-  try {
-    const savedOrders = localStorage.getItem(ORDERS_KEY);
-    const orders = savedOrders ? JSON.parse(savedOrders) : [];
-    
-    // Проверяем, нет ли уже такого заказа
-    const existingOrderIndex = orders.findIndex(order => order.id === orderId);
-    
-    if (existingOrderIndex !== -1) {
-      // Обновляем существующий заказ
-      orders[existingOrderIndex] = {
-        ...orders[existingOrderIndex],
-        total: total,
-        items: { ...items },
-        status: 'pending',
-        date: new Date().toISOString()
-      };
-    } else {
-      // Создаем новый заказ
-      const newOrder = {
-        id: orderId,
-        date: new Date().toISOString(),
-        total: total,
-        items: { ...items },
-        status: 'pending'
-      };
-      orders.unshift(newOrder); // Добавляем в начало
-    }
-    
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-    console.log(`✅ Заказ #${orderId} сохранен в историю (${orders.length} всего)`);
-    return true;
-  } catch (error) {
-    console.error('❌ Ошибка сохранения заказа:', error);
-    return false;
-  }
-}
-
-function loadOrderHistory() {
-  try {
-    const savedOrders = localStorage.getItem(ORDERS_KEY);
-    if (!savedOrders) {
-      console.log('📁 Нет сохраненных заказов в localStorage');
-      return [];
-    }
-    
-    const orders = JSON.parse(savedOrders);
-    console.log(`📁 Загружено ${orders.length} заказов из localStorage`);
-    
-    // Сортируем по дате (новые сверху)
-    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    return orders;
-  } catch (error) {
-    console.error('❌ Ошибка загрузки истории заказов:', error);
-    return [];
-  }
-}
-
-// Обновленная функция для обработки оплаты
-proceedToPayBtn.addEventListener('click', async () => {
-  const total = cartSum();
-  if (total < 10 || total > 10000) return;
-  
-  // Создаем временный ID заказа
-  const tempOrderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+// ===== ПРОФИЛЬ И ЗАКАЗЫ =====
+async function loadProfileData() {
+  if (!currentUser) return;
   
   try {
-    // СОХРАНЯЕМ ЗАКАЗ В ИСТОРИЮ СРАЗУ (временный)
-    saveOrderToHistory(tempOrderId, total, cart);
+    const localOrders = loadOrderHistory();
+    displayOrdersInProfile(localOrders);
     
-    const response = await fetch(`${API_URL}/api/create-order`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items: cart,
-        total: total,
-        userId: currentUser ? currentUser.id : null
-      })
-    });
-    
+    const response = await fetch(`${API_URL}/api/auth/profile?userId=${currentUser.id}`);
     const data = await response.json();
     
-    if (data.success && data.paymentUrl) {
-      currentOrderId = data.orderId;
-      currentPaymentUrl = data.paymentUrl;
+    if (data.success) {
+      document.getElementById('profileName').textContent = data.user.username;
       
-      // ОБНОВЛЯЕМ ID заказа на настоящий
-      updateOrderIdInHistory(tempOrderId, data.orderId);
+      const profileIdElement = document.getElementById('profileId');
+      if (data.user.telegramUsername) {
+        profileIdElement.innerHTML = `<div>TG ID: ${data.user.tgId}</div><div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">@${data.user.telegramUsername}</div>`;
+      } else {
+        profileIdElement.innerHTML = `<div>TG ID: ${data.user.tgId}</div>`;
+      }
       
-      updateOrderNumberElements(currentOrderId);
+      const avatar = document.getElementById('profileAvatar');
+      if (data.user.avatarUrl) {
+        avatar.innerHTML = `<img src="${data.user.avatarUrl}" alt="${data.user.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else if (data.user.username) {
+        avatar.textContent = data.user.username.charAt(0).toUpperCase();
+      }
       
-      show('payment');
-      document.getElementById('manualPaymentLink').href = data.paymentUrl;
-      
-      // Очищаем корзину
-      clearCart();
-      
-      setTimeout(() => {
-        window.open(data.paymentUrl, '_blank');
-      }, 1000);
+      if (data.orders && data.orders.length > 0) {
+        const allOrders = [...data.orders];
+        localOrders.forEach(localOrder => {
+          if (!allOrders.some(serverOrder => serverOrder.id === localOrder.id)) {
+            allOrders.push(localOrder);
+          }
+        });
+        
+        allOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        displayOrdersInProfile(allOrders);
+      }
       
     } else {
-      // Удаляем временный заказ если ошибка
-      removeOrderFromHistory(tempOrderId);
-      alert('Ошибка при создании заказа: ' + (data.error || 'неизвестная ошибка'));
+      console.log('⚠️ Сервер недоступен, показываем локальные заказы');
     }
   } catch (error) {
-    // Удаляем временный заказ если ошибка
-    removeOrderFromHistory(tempOrderId);
-    console.error('❌ Ошибка:', error);
-    alert('Ошибка соединения с сервером');
-  }
-});
-
-// Функция обновления ID заказа
-function updateOrderIdInHistory(oldId, newId) {
-  try {
-    const orders = loadOrderHistory();
-    const orderIndex = orders.findIndex(order => order.id === oldId);
-    
-    if (orderIndex !== -1) {
-      orders[orderIndex].id = newId;
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-      console.log(`🔄 ID заказа обновлен: ${oldId} → ${newId}`);
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('❌ Ошибка обновления ID заказа:', error);
-    return false;
+    console.error('Ошибка загрузки профиля:', error);
+    const localOrders = loadOrderHistory();
+    displayOrdersInProfile(localOrders);
   }
 }
 
-// Функция удаления заказа из истории
-function removeOrderFromHistory(orderId) {
-  try {
-    const orders = loadOrderHistory();
-    const filteredOrders = orders.filter(order => order.id !== orderId);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredOrders));
-    console.log(`🗑️ Заказ #${orderId} удален из истории`);
-    return true;
-  } catch (error) {
-    console.error('❌ Ошибка удаления заказа:', error);
-    return false;
-  }
-}
-
-// Обновленная функция отображения заказов в профиле
 function displayOrdersInProfile(orders) {
   const ordersList = document.getElementById('ordersList');
   const ordersCount = document.getElementById('ordersCount');
@@ -1606,7 +1656,6 @@ function displayOrdersInProfile(orders) {
         minute: '2-digit'
       });
       
-      // Формируем строку с товарами
       let itemsText = '';
       if (order.items && typeof order.items === 'object') {
         const itemEntries = Object.entries(order.items);
@@ -1622,10 +1671,12 @@ function displayOrdersInProfile(orders) {
         }
       }
       
+      const displayId = order.id.startsWith('temp_') ? order.id.replace('temp_', 'TEMP-') : order.id;
+      
       return `
         <div class="order-item" data-order-id="${order.id}">
           <div class="order-header">
-            <div class="order-id">Заказ #${order.id.replace('temp_', '')}</div>
+            <div class="order-id">Заказ #${displayId}</div>
             <div class="order-date">${formattedDate}</div>
           </div>
           ${itemsText ? `
@@ -1647,7 +1698,6 @@ function displayOrdersInProfile(orders) {
       `;
     }).join('');
     
-    // Добавляем обработчики кликов
     setTimeout(() => {
       document.querySelectorAll('.order-item').forEach(item => {
         item.addEventListener('click', function() {
@@ -1663,170 +1713,158 @@ function displayOrdersInProfile(orders) {
   }
 }
 
-// Обновленная функция загрузки профиля
-async function loadProfileData() {
-  if (!currentUser) return;
+function showOrderDetails(orderId) {
+  const orders = loadOrderHistory();
+  const order = orders.find(o => o.id === orderId);
   
-  try {
-    // Сразу показываем заказы из localStorage
-    const localOrders = loadOrderHistory();
-    displayOrdersInProfile(localOrders);
-    
-    // Затем пытаемся загрузить с сервера
-    const response = await fetch(`${API_URL}/api/auth/profile?userId=${currentUser.id}`);
-    const data = await response.json();
-    
-    if (data.success) {
-      // Обновляем информацию профиля
-      document.getElementById('profileName').textContent = data.user.username;
-      
-      const profileIdElement = document.getElementById('profileId');
-      if (data.user.telegramUsername) {
-        profileIdElement.innerHTML = `<div>TG ID: ${data.user.tgId}</div><div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">@${data.user.telegramUsername}</div>`;
-      } else {
-        profileIdElement.innerHTML = `<div>TG ID: ${data.user.tgId}</div>`;
-      }
-      
-      const avatar = document.getElementById('profileAvatar');
-      if (data.user.avatarUrl) {
-        avatar.innerHTML = `<img src="${data.user.avatarUrl}" alt="${data.user.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-      } else if (data.user.username) {
-        avatar.textContent = data.user.username.charAt(0).toUpperCase();
-      }
-      
-      // Объединяем заказы с сервера и из localStorage
-      if (data.orders && data.orders.length > 0) {
-        const allOrders = [...data.orders];
-        
-        // Добавляем локальные заказы, которых нет на сервере
-        localOrders.forEach(localOrder => {
-          if (!allOrders.some(serverOrder => serverOrder.id === localOrder.id)) {
-            allOrders.push(localOrder);
-          }
-        });
-        
-        // Сортируем по дате
-        allOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        displayOrdersInProfile(allOrders);
-      }
-      
-    } else {
-      // Если сервер недоступен, показываем только локальные заказы
-      console.log('⚠️ Сервер недоступен, показываем локальные заказы');
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки профиля:', error);
-    // В случае ошибки показываем локальные заказы
-    const localOrders = loadOrderHistory();
-    displayOrdersInProfile(localOrders);
+  if (!order) {
+    alert('Заказ не найден');
+    return;
   }
-}
-
-// Функция для проверки и миграции старых заказов
-function migrateOldOrders() {
-  const oldKeys = ['orders', 'shop_orders', 'user_orders'];
-  let migratedOrders = [];
   
-  oldKeys.forEach(key => {
-    try {
-      const oldData = localStorage.getItem(key);
-      if (oldData) {
-        const parsed = JSON.parse(oldData);
-        if (Array.isArray(parsed)) {
-          parsed.forEach(order => {
-            if (order && order.id && order.total !== undefined) {
-              // Добавляем статус если его нет
-              if (!order.status) order.status = 'pending';
-              migratedOrders.push(order);
-            }
-          });
-          console.log(`✅ Мигрировано ${parsed.length} заказов из ${key}`);
-        }
-      }
-    } catch (e) {
-      console.log(`❌ Не удалось мигрировать заказы из ${key}:`, e);
-    }
+  const modalHtml = `
+    <div class="order-details-modal" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+      box-sizing: border-box;
+    ">
+      <div style="
+        background: linear-gradient(180deg, #0b3c91, #124fa5);
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        position: relative;
+      ">
+        <button id="closeOrderModal" style="
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          background: rgba(255,255,255,0.1);
+          border: none;
+          color: white;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          font-size: 20px;
+          cursor: pointer;
+        ">×</button>
+        
+        <h3 style="margin: 0 0 20px 0; text-align: center;">Заказ #${order.id}</h3>
+        
+        <div style="margin-bottom: 20px;">
+          <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-bottom: 5px;">Дата создания:</div>
+          <div style="font-weight: 700;">${new Date(order.date).toLocaleString('ru-RU')}</div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-bottom: 10px;">Товары:</div>
+          ${order.items && typeof order.items === 'object' 
+            ? Object.entries(order.items).map(([id, qty]) => {
+                const product = PRODUCTS.find(p => p.id === id);
+                return `
+                  <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px;
+                    background: rgba(255,255,255,0.05);
+                    border-radius: 10px;
+                    margin-bottom: 8px;
+                  ">
+                    <div>
+                      <div style="font-weight: 700;">${product ? product.name : `Товар ${id}`}</div>
+                      <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Количество: ${qty}</div>
+                    </div>
+                    <div style="font-weight: 700;">${product ? fmtRub(product.price * qty) : '—'}</div>
+                  </div>
+                `;
+              }).join('')
+            : '<div style="color: rgba(255,255,255,0.6);">Информация о товарах недоступна</div>'
+          }
+        </div>
+        
+        <div style="
+          border-top: 2px solid rgba(255,255,255,0.2);
+          padding-top: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 18px;
+          font-weight: 800;
+        ">
+          <div>Итого:</div>
+          <div>${fmtRub(order.total)}</div>
+        </div>
+        
+        <div style="
+          margin-top: 20px;
+          padding: 12px;
+          background: ${order.status === 'completed' ? 'rgba(0,200,83,0.2)' : 
+                      order.status === 'failed' ? 'rgba(255,45,85,0.2)' : 
+                      'rgba(255,215,0,0.2)'};
+          border-radius: 12px;
+          text-align: center;
+          font-weight: 700;
+          color: ${order.status === 'completed' ? '#00c853' : 
+                  order.status === 'failed' ? '#ff2d55' : 
+                  '#ffd700'};
+        ">
+          Статус: ${order.status === 'completed' ? 'Завершен' : 
+                   order.status === 'failed' ? 'Отменен' : 
+                   'В обработке'}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const modal = document.createElement('div');
+  modal.innerHTML = modalHtml;
+  document.body.appendChild(modal);
+  
+  modal.querySelector('#closeOrderModal').addEventListener('click', () => {
+    document.body.removeChild(modal);
   });
   
-  if (migratedOrders.length > 0) {
-    const currentOrders = loadOrderHistory();
-    const allOrders = [...migratedOrders, ...currentOrders];
-    
-    // Убираем дубликаты
-    const uniqueOrders = [];
-    const seenIds = new Set();
-    
-    allOrders.forEach(order => {
-      if (!seenIds.has(order.id)) {
-        seenIds.add(order.id);
-        uniqueOrders.push(order);
-      }
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  });
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async function() {
+  try {
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: 'POST'
     });
     
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(uniqueOrders));
-    console.log(`✅ Всего сохранено ${uniqueOrders.length} уникальных заказов`);
-    return uniqueOrders;
+    localStorage.removeItem('duck_user');
+    currentUser = null;
+    updateAuthButton();
+    show('menu');
+  } catch (error) {
+    console.error('Ошибка выхода:', error);
   }
-  
-  return [];
-}
-
-// Добавь вызов миграции при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Инициализация сайта...');
-  loadAllLottieAnimations();
-  updateBadge();
-  checkAuth();
-  checkPaymentResult();
-  
-  // Пробуем мигрировать старые заказы
-  migrateOldOrders();
 });
 
-// Обновленная функция checkPaymentResult
-function checkPaymentResult() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const status = urlParams.get('payment');
-  const orderId = urlParams.get('order');
-  
-  if (status === 'success' && orderId) {
-    // ОБНОВЛЯЕМ СТАТУС ЗАКАЗА
-    updateOrderStatus(orderId, 'completed');
-    
-    // Показываем сообщение
-    setTimeout(() => {
-      alert(`✅ Заказ #${orderId} успешно оплачен! Статус обновлен.`);
-    }, 500);
-    
-    // РЕДИРЕКТ на отдельную страницу ввода email
-    window.location.href = `success.html?order=${orderId}`;
-    
-  } else if (status === 'fail' && orderId) {
-    // ОБНОВЛЯЕМ СТАТУС ЗАКАЗА
-    updateOrderStatus(orderId, 'failed');
-    
-    currentOrderId = orderId;
-    updateOrderNumberElements(currentOrderId);
-    show('badPay');
-    
-    const newUrl = window.location.pathname;
-    window.history.replaceState({}, '', newUrl);
-  }
-  
-  // Проверка авторизации через Telegram
-  const authToken = urlParams.get('auth');
-  if (authToken) {
-    verifyAuthToken(authToken);
-    const newUrl = window.location.pathname;
-    window.history.replaceState({}, '', newUrl);
-  }
-}
+document.getElementById('backToMenuBtn').addEventListener('click', function() {
+  show('menu');
+});
 
 // ===== ТОВАРЫ =====
-let PRODUCTS = [];
-let productsCheckInterval = null;
-
 const DEFAULT_PRODUCTS = [
   { id: "c30", name: "30 кристаллов", price: 200, image_url: "https://i.imgur.com/s4K0WIP.png", is_gift: false },
   { id: "c80", name: "80 кристаллов", price: 550, image_url: "https://i.imgur.com/XbnZKDb.png", is_gift: false },
@@ -1841,10 +1879,6 @@ const DEFAULT_PRODUCTS = [
   { id: "bpp_g", name: "Brawl Pass Plus", price: 1250, image_url: "https://i.imgur.com/21InnIc.png", is_gift: true },
   { id: "pro", name: "Pro Pass", price: 2200, image_url: "https://i.imgur.com/6808Xnp.png", is_gift: false }
 ];
-
-function fmtRub(n){
-  return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
-}
 
 function updateOrderNumberElements(orderId) {
   const orderNumber = `Заказ #${orderId}`;
@@ -2091,42 +2125,9 @@ window.addEventListener('resize', () => {
 });
 
 // ===== КОРЗИНА =====
-const CART_KEY = 'duck_cart_v1';
-let cart = loadCart();
-
-function loadCart(){
-  try {
-    const raw = localStorage.getItem(CART_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveCart(){
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-}
-
-function cartCount(){
-  return Object.values(cart).reduce((a,b) => a + b, 0);
-}
-
-function cartSum(){
-  let sum = 0;
-  for (const [id, qty] of Object.entries(cart)) {
-    const p = PRODUCTS.find(x => x.id === id);
-    if (p) sum += p.price * qty;
-  }
-  return sum;
-}
-
-const cartBadge = document.getElementById('cartBadge');
-const cartOverlay = document.getElementById('cartOverlay');
-const cartBody = document.getElementById('cartBody');
-const cartTotalEl = document.getElementById('cartTotal');
-
 function updateBadge(){
   const n = cartCount();
+  const cartBadge = document.getElementById('cartBadge');
   if (n > 0) {
     cartBadge.style.display = 'inline-flex';
     cartBadge.textContent = n;
@@ -2136,6 +2137,11 @@ function updateBadge(){
 }
 
 function renderCart(){
+  const cartBody = document.getElementById('cartBody');
+  const cartTotalEl = document.getElementById('cartTotal');
+  
+  if (!cartBody || !cartTotalEl) return;
+  
   const entries = Object.entries(cart);
   if (entries.length === 0) {
     cartBody.innerHTML = `<div class="cart-empty">Корзина пуста</div>`;
@@ -2202,26 +2208,28 @@ document.addEventListener('click', (e) => {
   addToCart(id);
   b.style.transform = 'scale(.98)';
   setTimeout(() => b.style.transform = '', 120);
-  if (cartOverlay.classList.contains('open')) renderCart();
+  if (document.getElementById('cartOverlay').classList.contains('open')) renderCart();
 });
 
 document.getElementById('openCart').addEventListener('click', () => {
+  const cartOverlay = document.getElementById('cartOverlay');
   cartOverlay.classList.add('open');
   cartOverlay.setAttribute('aria-hidden', 'false');
   renderCart();
 });
 
 function closeCart(){
+  const cartOverlay = document.getElementById('cartOverlay');
   cartOverlay.classList.remove('open');
   cartOverlay.setAttribute('aria-hidden', 'true');
 }
 
 document.getElementById('closeCart').addEventListener('click', closeCart);
-cartOverlay.addEventListener('click', (e) => {
-  if (e.target === cartOverlay) closeCart();
+document.getElementById('cartOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('cartOverlay')) closeCart();
 });
 
-cartBody.addEventListener('click', (e) => {
+document.getElementById('cartBody').addEventListener('click', (e) => {
   const incBtn = e.target.closest('[data-inc]');
   const decBtn = e.target.closest('[data-dec]');
   if (incBtn) inc(incBtn.getAttribute('data-inc'));
@@ -2234,13 +2242,15 @@ document.getElementById('checkoutBtn').addEventListener('click', () => {
 });
 
 // ===== ОФОРМЛЕНИЕ ЗАКАЗА =====
-const proceedToPayBtn = document.getElementById('proceedToPay');
-const amountError = document.getElementById('amountError');
-const errorText = document.getElementById('errorText');
-const checkoutSummary = document.getElementById('checkoutSummary');
-
 function showCheckout() {
   const total = cartSum();
+  const checkoutSummary = document.getElementById('checkoutSummary');
+  const proceedToPayBtn = document.getElementById('proceedToPay');
+  const amountError = document.getElementById('amountError');
+  const errorText = document.getElementById('errorText');
+  
+  if (!checkoutSummary || !proceedToPayBtn || !amountError || !errorText) return;
+  
   checkoutSummary.innerHTML = '';
   
   Object.entries(cart).forEach(([id, qty]) => {
@@ -2285,11 +2295,17 @@ document.getElementById('backToMenu').addEventListener('click', () => {
 });
 
 // ===== ОПЛАТА =====
-proceedToPayBtn.addEventListener('click', async () => {
+document.getElementById('proceedToPay').addEventListener('click', async () => {
   const total = cartSum();
   if (total < 10 || total > 10000) return;
   
+  // Создаем временный ID заказа
+  const tempOrderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
+    // СОХРАНЯЕМ ЗАКАЗ В ИСТОРИЮ СРАЗУ (временный)
+    saveOrderToHistory(tempOrderId, total, cart);
+    
     const response = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2306,8 +2322,8 @@ proceedToPayBtn.addEventListener('click', async () => {
       currentOrderId = data.orderId;
       currentPaymentUrl = data.paymentUrl;
       
-      // СОХРАНЯЕМ ЗАКАЗ В ИСТОРИЮ
-      saveOrderToHistory(data.orderId, total, cart);
+      // ОБНОВЛЯЕМ ID заказа на настоящий
+      updateOrderIdInHistory(tempOrderId, data.orderId);
       
       updateOrderNumberElements(currentOrderId);
       
@@ -2318,12 +2334,17 @@ proceedToPayBtn.addEventListener('click', async () => {
       clearCart();
       
       setTimeout(() => {
-        window.open(data.paymentUrl, '_self');
-      }, 2000);
+        window.open(data.paymentUrl, '_blank');
+      }, 1000);
+      
     } else {
+      // Удаляем временный заказ если ошибка
+      removeOrderFromHistory(tempOrderId);
       alert('Ошибка при создании заказа: ' + (data.error || 'неизвестная ошибка'));
     }
   } catch (error) {
+    // Удаляем временный заказ если ошибка
+    removeOrderFromHistory(tempOrderId);
     console.error('❌ Ошибка:', error);
     alert('Ошибка соединения с сервером');
   }
@@ -2344,11 +2365,13 @@ function checkPaymentResult() {
     // ОБНОВЛЯЕМ СТАТУС ЗАКАЗА
     updateOrderStatus(orderId, 'completed');
     
-    // РЕДИРЕКТ на отдельную страницу ввода email
+    setTimeout(() => {
+      alert(`✅ Заказ #${orderId} успешно оплачен! Статус обновлен.`);
+    }, 500);
+    
     window.location.href = `success.html?order=${orderId}`;
     
   } else if (status === 'fail' && orderId) {
-    // ОБНОВЛЯЕМ СТАТУС ЗАКАЗА
     updateOrderStatus(orderId, 'failed');
     
     currentOrderId = orderId;
@@ -2359,7 +2382,6 @@ function checkPaymentResult() {
     window.history.replaceState({}, '', newUrl);
   }
   
-  // Проверка авторизации через Telegram
   const authToken = urlParams.get('auth');
   if (authToken) {
     verifyAuthToken(authToken);
@@ -2390,10 +2412,19 @@ async function verifyAuthToken(token) {
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Инициализация сайта...');
+  
+  // Инициализируем корзину
+  cart = loadCart();
+  
   loadAllLottieAnimations();
   updateBadge();
   checkAuth();
   checkPaymentResult();
+  
+  // Загружаем товары
+  if (PRODUCTS.length === 0) {
+    loadProducts();
+  }
 });
 
 // Очистить корзину
