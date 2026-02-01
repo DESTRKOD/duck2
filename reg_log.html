@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 <style>
-/* ===== БАЗОВЫЕ СТИЛИ ===== */
+/* ===== БАЗОВЫЕ СТИЛИ (ТОЧНО КАК В ОСНОВНОМ ФАЙЛЕ) ===== */
 html, body {
   margin: 0;
   padding: 0;
@@ -17,7 +17,6 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  touch-action: manipulation; /* Важно для мобильных */
 }
 
 /* ===== ЭКРАН АВТОРИЗАЦИИ ===== */
@@ -62,45 +61,28 @@ html, body {
   }
 }
 
-/* ===== КНОПКИ КАК В ОСНОВНОМ САЙТЕ ===== */
+/* ===== КНОПКИ ТОЧНО КАК "ПРОДОЛЖИТЬ" В ОСНОВНОМ ФАЙЛЕ ===== */
 .button {
   width: 100%;
   max-width: 280px;
-  margin: 0 0 12px 0;
+  margin: 12px 0;
   padding: 20px 0;
   font-size: 18px;
   font-weight: 800;
   background: #fff;
   color: #0b3c91;
   border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(0,0,0,.45);
-  transition: all .15s ease;
-  user-select: none;
-  cursor: pointer;
   border: none;
+  box-shadow: 0 16px 36px rgba(0,0,0,.45);
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s ease, box-shadow .12s ease;
   outline: none;
-  text-align: center;
-  display: block;
-  position: relative;
-  -webkit-tap-highlight-color: transparent; /* Убираем синий highlight на iOS */
-  -webkit-appearance: none; /* Убираем стандартные стили iOS */
-  appearance: none;
 }
 
-/* Эффект наведения (hover) */
-.button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0,0,0,.5);
-}
-
-/* Эффект нажатия (active/pressed) */
-.button.pressed {
-  transform: translateY(6px) scale(.95);
-  box-shadow: 0 6px 14px rgba(0,0,0,.35);
-}
-
+/* Эффект нажатия (ТОЧНО КАК В ОСНОВНОМ ФАЙЛЕ) */
 .button:active {
-  transform: translateY(6px) scale(.95);
+  transform: translateY(6px) scale(.9);
   box-shadow: 0 6px 14px rgba(0,0,0,.35);
 }
 
@@ -112,35 +94,9 @@ html, body {
   box-shadow: 0 8px 20px rgba(0,0,0,.25) !important;
 }
 
-.button.loading-state {
-  position: relative;
-  color: transparent;
-}
-
-.button.loading-state::before {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(11, 60, 145, 0.3);
-  border-top-color: #0b3c91;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  top: 50%;
-  left: 50%;
-  margin-top: -10px;
-  margin-left: -10px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* ===== ТЕКСТ ПОД КНОПКАМИ ===== */
 .telegram-note {
-  margin-top: 20px;
+  margin-top: 10px;
   color: rgba(255,255,255,0.8);
   font-size: 14px;
   text-align: center;
@@ -151,7 +107,6 @@ html, body {
 @media (max-width: 480px) {
   .telegram-note {
     font-size: 13px;
-    margin-top: 15px;
   }
 }
 
@@ -173,7 +128,6 @@ html, body {
   background: rgba(255,255,255,0.1);
   color: white;
   border-left: 4px solid #4fc3f7;
-  animation: pulse 1.5s infinite;
 }
 
 .status-success {
@@ -186,22 +140,6 @@ html, body {
   background: rgba(255,45,85,0.15);
   color: white;
   border-left: 4px solid #ff2d55;
-  animation: shake 0.5s ease-in-out;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
 }
 
 /* ===== АДАПТИВНОСТЬ ===== */
@@ -216,74 +154,16 @@ html, body {
   }
   
   .button {
-    padding: 18px 0;
+    padding: 16px 0;
     font-size: 16px;
     max-width: 260px;
+    margin: 10px 0;
   }
   
   .telegram-note {
     font-size: 12px;
     max-width: 260px;
   }
-}
-
-/* Для устройств без hover (мобильные) */
-@media (hover: none) {
-  .button:hover {
-    transform: none;
-    box-shadow: 0 16px 36px rgba(0,0,0,.45);
-  }
-}
-
-/* ===== ЭКРАН ПРИ УЖЕ АВТОРИЗОВАННОМ ПОЛЬЗОВАТЕЛЕ ===== */
-.already-auth {
-  display: none;
-  text-align: center;
-}
-
-.already-auth .title {
-  color: #ffd700;
-  margin-bottom: 15px;
-}
-
-.already-auth .user-info {
-  color: white;
-  margin: 20px 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.already-auth .avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  margin: 0 auto 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  color: white;
-  font-weight: 900;
-}
-
-.already-auth .avatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.already-auth .username {
-  font-size: 20px;
-  font-weight: 800;
-  margin-bottom: 5px;
-}
-
-.already-auth .tg-id {
-  font-size: 14px;
-  color: rgba(255,255,255,0.8);
-  margin-bottom: 25px;
 }
 </style>
 </head>
@@ -320,18 +200,6 @@ html, body {
   <div class="status-message status-error" id="errorMessage"></div>
 </div>
 
-<!-- ЭКРАН ДЛЯ УЖЕ АВТОРИЗОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ (скрыт по умолчанию) -->
-<div class="already-auth" id="alreadyAuthScreen">
-  <div class="avatar" id="userAvatar">U</div>
-  <div class="username" id="userName">Пользователь</div>
-  <div class="tg-id" id="userTgId">TG ID: ...</div>
-  
-  <div class="title">Вы уже авторизованы!</div>
-  
-  <button class="button" id="goToShopBtn">Перейти в магазин</button>
-  <button class="button" id="logoutBtn" style="background: rgba(255,255,255,0.1); color: white; margin-top: 10px;">Выйти из аккаунта</button>
-</div>
-
 <script>
 const API_URL = 'https://duck-shop-sever.onrender.com';
 const SITE_URL = 'https://DESTRKOD.github.io/duck2';
@@ -343,15 +211,6 @@ const backBtn = document.getElementById('backBtn');
 const loadingMessage = document.getElementById('loadingMessage');
 const successMessage = document.getElementById('successMessage');
 const errorMessage = document.getElementById('errorMessage');
-
-// Элементы для уже авторизованных
-const authScreen = document.querySelector('.auth-screen');
-const alreadyAuthScreen = document.getElementById('alreadyAuthScreen');
-const goToShopBtn = document.getElementById('goToShopBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const userAvatar = document.getElementById('userAvatar');
-const userName = document.getElementById('userName');
-const userTgId = document.getElementById('userTgId');
 
 // Инициализация Lottie анимации
 function initLottieAnimation() {
@@ -389,167 +248,15 @@ function showStatus(type, message = '') {
   }
 }
 
-// Упрощенная настройка анимаций для кнопки - работает на всех устройствах
-function setupButtonAnimations(button) {
-  // Убираем все старые обработчики
-  button.replaceWith(button.cloneNode(true));
-  
-  // Получаем новую ссылку на кнопку
-  const newButton = button.id ? document.getElementById(button.id) : button;
-  
-  // Простой обработчик для всех устройств
-  newButton.addEventListener('mousedown', function() {
-    this.classList.add('pressed');
-  });
-  
-  newButton.addEventListener('mouseup', function() {
-    this.classList.remove('pressed');
-  });
-  
-  newButton.addEventListener('mouseleave', function() {
-    this.classList.remove('pressed');
-  });
-  
-  // Для тач-устройств
-  newButton.addEventListener('touchstart', function(e) {
-    e.preventDefault(); // Предотвращаем скролл
-    this.classList.add('pressed');
-  }, { passive: false }); // Указываем, что не пассивный
-  
-  newButton.addEventListener('touchend', function(e) {
-    e.preventDefault();
-    this.classList.remove('pressed');
-  }, { passive: false });
-  
-  newButton.addEventListener('touchcancel', function() {
-    this.classList.remove('pressed');
-  });
-  
-  // CSS-псевдокласс :active для подстраховки
-  newButton.addEventListener('click', function() {
-    // Убираем pressed через короткое время
-    setTimeout(() => {
-      this.classList.remove('pressed');
-    }, 150);
-  });
-  
-  return newButton;
-}
-
-// Проверка авторизации при загрузке страницы
-async function checkAuthOnLoad() {
-  const savedUser = localStorage.getItem('duck_user');
-  
-  if (savedUser) {
-    try {
-      const user = JSON.parse(savedUser);
-      
-      // Проверяем, действителен ли токен на сервере
-      const response = await fetch(`${API_URL}/api/auth/check-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success && data.valid) {
-        // Показываем экран для авторизованных
-        showAlreadyAuthScreen(user);
-        return true;
-      } else {
-        // Токен невалидный, удаляем
-        localStorage.removeItem('duck_user');
-      }
-    } catch (error) {
-      console.error('Ошибка проверки токена:', error);
-    }
-  }
-  
-  // Проверяем параметры URL (если пришли с токеном)
-  const urlParams = new URLSearchParams(window.location.search);
-  const authToken = urlParams.get('auth');
-  
-  if (authToken) {
-    await verifyAuthToken(authToken);
-    return true;
-  }
-  
-  return false;
-}
-
-// Показать экран для уже авторизованных
-function showAlreadyAuthScreen(user) {
-  authScreen.style.display = 'none';
-  alreadyAuthScreen.style.display = 'block';
-  
-  // Заполняем данные пользователя
-  userName.textContent = user.username || 'Пользователь';
-  userTgId.textContent = user.tgId ? `TG ID: ${user.tgId}` : 'TG ID: ...';
-  
-  if (user.avatarUrl) {
-    userAvatar.innerHTML = `<img src="${user.avatarUrl}" alt="${user.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-  } else if (user.username) {
-    userAvatar.textContent = user.username.charAt(0).toUpperCase();
-  }
-}
-
 // Назад в магазин
-function setupBackBtn() {
-  backBtn.addEventListener('click', function() {
-    this.classList.add('pressed');
-    setTimeout(() => {
-      this.classList.remove('pressed');
-      window.location.href = `${SITE_URL}/beta-duck.html`;
-    }, 200);
-  });
-}
-
-// Переход в магазин (для авторизованных)
-function setupGoToShopBtn() {
-  goToShopBtn.addEventListener('click', function() {
-    this.classList.add('pressed');
-    setTimeout(() => {
-      this.classList.remove('pressed');
-      window.location.href = `${SITE_URL}/beta-duck.html`;
-    }, 200);
-  });
-}
-
-// Выход из аккаунта
-function setupLogoutBtn() {
-  logoutBtn.addEventListener('click', async function() {
-    this.classList.add('pressed');
-    
-    try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      localStorage.removeItem('duck_user');
-      
-      setTimeout(() => {
-        this.classList.remove('pressed');
-        // Показываем обычный экран авторизации
-        alreadyAuthScreen.style.display = 'none';
-        authScreen.style.display = 'block';
-      }, 200);
-      
-    } catch (error) {
-      console.error('Ошибка выхода:', error);
-      this.classList.remove('pressed');
-    }
-  });
-}
+backBtn.addEventListener('click', () => {
+  window.location.href = `${SITE_URL}/beta-duck.html`;
+});
 
 // Общая функция авторизации
 async function handleAuth(endpoint, button) {
-  // Визуальная обратная связь
-  button.classList.add('pressed');
-  
+  // Визуальная обратная связь - нажатие (через CSS :active)
   button.disabled = true;
-  button.classList.add('loading-state');
   
   showStatus('loading');
   
@@ -565,10 +272,8 @@ async function handleAuth(endpoint, button) {
       showStatus('success');
       
       button.disabled = false;
-      button.classList.remove('loading-state');
-      button.classList.remove('pressed');
       
-      // Открываем Telegram
+      // Открываем Telegram через 1 секунду
       setTimeout(() => {
         window.open(data.telegramLink, '_blank');
       }, 1000);
@@ -590,8 +295,6 @@ async function handleAuth(endpoint, button) {
         } else if (checkData.success && checkData.expired) {
           clearInterval(checkInterval);
           button.disabled = false;
-          button.classList.remove('loading-state');
-          button.classList.remove('pressed');
           showStatus('error', '❌ Время ожидания истекло. Попробуйте снова.');
         }
       }, 2000);
@@ -600,32 +303,37 @@ async function handleAuth(endpoint, button) {
       
     } else {
       button.disabled = false;
-      button.classList.remove('loading-state');
-      button.classList.remove('pressed');
       showStatus('error', `❌ ${data.error || 'Ошибка соединения'}`);
     }
   } catch (err) {
     button.disabled = false;
-    button.classList.remove('loading-state');
-    button.classList.remove('pressed');
     showStatus('error', '❌ Ошибка соединения с сервером');
     console.error('Ошибка авторизации:', err);
   }
 }
 
 // Регистрация
-function setupRegisterBtn() {
-  registerBtn.addEventListener('click', () => {
-    handleAuth('start-register', registerBtn);
-  });
-}
+registerBtn.addEventListener('click', () => {
+  handleAuth('start-register', registerBtn);
+});
 
 // Вход
-function setupLoginBtn() {
-  loginBtn.addEventListener('click', () => {
-    handleAuth('start-login', loginBtn);
-  });
-}
+loginBtn.addEventListener('click', () => {
+  handleAuth('start-login', loginBtn);
+});
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+  initLottieAnimation();
+  
+  // Проверяем токен в URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const authToken = urlParams.get('auth');
+  
+  if (authToken) {
+    verifyAuthToken(authToken);
+  }
+});
 
 // Функция проверки токена
 async function verifyAuthToken(token) {
@@ -643,9 +351,8 @@ async function verifyAuthToken(token) {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
       
-      // Показываем экран для авторизованных
-      showAlreadyAuthScreen(data.user);
-      
+      // Перенаправляем в магазин
+      window.location.href = `${SITE_URL}/beta-duck.html`;
     } else {
       showStatus('error', '❌ Токен недействителен');
     }
@@ -654,45 +361,6 @@ async function verifyAuthToken(token) {
     showStatus('error', '❌ Ошибка проверки авторизации');
   }
 }
-
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', async () => {
-  initLottieAnimation();
-  
-  // Настраиваем анимации для всех кнопок
-  setupButtonAnimations(registerBtn);
-  setupButtonAnimations(loginBtn);
-  setupButtonAnimations(backBtn);
-  setupButtonAnimations(goToShopBtn);
-  setupButtonAnimations(logoutBtn);
-  
-  // Настраиваем обработчики кликов
-  setupRegisterBtn();
-  setupLoginBtn();
-  setupBackBtn();
-  setupGoToShopBtn();
-  setupLogoutBtn();
-  
-  // Проверяем авторизацию
-  const isAuthed = await checkAuthOnLoad();
-  
-  if (!isAuthed) {
-    // Проверяем токен в URL если не авторизованы
-    const urlParams = new URLSearchParams(window.location.search);
-    const authToken = urlParams.get('auth');
-    
-    if (authToken) {
-      await verifyAuthToken(authToken);
-    }
-  }
-  
-  // iOS фикс для скролла
-  document.addEventListener('touchmove', function(e) {
-    if (e.target.classList.contains('button')) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-});
 </script>
 </body>
 </html>
