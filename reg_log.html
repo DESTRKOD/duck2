@@ -294,14 +294,51 @@ function showStatus(type, message = '') {
 }
 
 // Анимация нажатия кнопки
-function animateButton(button) {
-  button.classList.add('pressed');
-  setTimeout(() => button.classList.remove('pressed'), 200);
+function setupButtonPress(button) {
+  // Добавляем эффект нажатия на pointerdown (касание/нажатие мыши)
+  button.addEventListener('pointerdown', () => {
+    button.classList.add('pressed');
+  });
+  
+  // Убираем эффект нажатия на pointerup (отпускание)
+  button.addEventListener('pointerup', () => {
+    button.classList.remove('pressed');
+  });
+  
+  // Убираем эффект если ушли с кнопки не отпустив
+  button.addEventListener('pointerleave', () => {
+    button.classList.remove('pressed');
+  });
+  
+  // Для совместимости с мышью
+  button.addEventListener('mousedown', () => {
+    button.classList.add('pressed');
+  });
+  
+  button.addEventListener('mouseup', () => {
+    button.classList.remove('pressed');
+  });
+  
+  button.addEventListener('mouseleave', () => {
+    button.classList.remove('pressed');
+  });
+  
+  // Для сенсорных экранов
+  button.addEventListener('touchstart', () => {
+    button.classList.add('pressed');
+  });
+  
+  button.addEventListener('touchend', () => {
+    button.classList.remove('pressed');
+  });
+  
+  button.addEventListener('touchcancel', () => {
+    button.classList.remove('pressed');
+  });
 }
 
 // Назад в магазин
 backBtn.addEventListener('click', () => {
-  animateButton(backBtn);
   setTimeout(() => {
     window.location.href = `${SITE_URL}/beta-duck.html`;
   }, 200);
@@ -309,8 +346,10 @@ backBtn.addEventListener('click', () => {
 
 // Общая функция авторизации
 async function handleAuth(endpoint, button) {
-  // Визуальная обратная связь
-  animateButton(button);
+  // Визуальная обратная связь - дополнительное нажатие
+  button.classList.add('pressed');
+  setTimeout(() => button.classList.remove('pressed'), 120);
+  
   button.disabled = true;
   button.classList.add('loading-state');
   
@@ -386,6 +425,11 @@ loginBtn.addEventListener('click', () => {
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
   initLottieAnimation();
+  
+  // Настраиваем эффект нажатия для всех кнопок
+  setupButtonPress(registerBtn);
+  setupButtonPress(loginBtn);
+  setupButtonPress(backBtn);
   
   // Проверяем параметры URL для автоматического редиректа
   const urlParams = new URLSearchParams(window.location.search);
