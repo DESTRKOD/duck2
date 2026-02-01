@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <title>Shop</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
 <style>
@@ -14,6 +18,17 @@ html, body {
   height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(180deg, #0b3c91 0%, #1565c0 55%, #42a5f5 100%);
+}
+// Инициализация Firebase
+let firebaseApp, firestore, auth;
+
+try {
+  firebaseApp = firebase.initializeApp(firebaseConfig);
+  firestore = firebase.firestore();
+  auth = firebase.auth();
+  console.log('✅ Firebase инициализирован');
+} catch (error) {
+  console.error('❌ Ошибка инициализации Firebase:', error);
 }
 
 /* ===== ЭКРАНЫ (с анимацией улёта) ===== */
@@ -1295,155 +1310,196 @@ function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
-// ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ =====
-function saveOrderToHistory(orderId, total, items) {
+// ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ (FIRESTORE) =====
+
+// Сохранить заказ в Firestore
+async function saveOrderToFirestore(orderId, total, items, userId = null) {
+  try {
+    if (!firestore) {
+      console.warn('⚠️ Firestore не инициализирован, использую localStorage');
+      return saveOrderToLocal(orderId, total, items);
+    }
+    
+    const orderData = {
+      id: orderId,
+      userId: userId || (currentUser ? currentUser.id : 'anonymous'),
+      username: currentUser ? currentUser.username : 'Гость',
+      total: total,
+      items: items,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    // Сохраняем в Firestore
+    await firestore.collection('orders').doc(orderId).set(orderData);
+    console.log(`✅ Заказ #${orderId} сохранен в Firestore`);
+    
+    // Также сохраняем локально для оффлайн-доступа
+    saveOrderToLocal(orderId, total, items);
+    
+    return orderId;
+  } catch (error) {
+    console.error('❌ Ошибка сохранения заказа в Firestore:', error);
+    
+    // Fallback: сохраняем только локально
+    saveOrderToLocal(orderId, total, items);
+    return orderId;
+  }
+}
+
+// Локальное сохранение (fallback)
+function saveOrderToLocal(orderId, total, items) {
   try {
     const savedOrders = localStorage.getItem(ORDERS_KEY);
     const orders = savedOrders ? JSON.parse(savedOrders) : [];
     
-    const existingOrderIndex = orders.findIndex(order => order.id === orderId);
+    const newOrder = {
+      id: orderId,
+      date: new Date().toISOString(),
+      total: total,
+      items: { ...items },
+      status: 'pending'
+    };
     
-    if (existingOrderIndex !== -1) {
-      orders[existingOrderIndex] = {
-        ...orders[existingOrderIndex],
-        total: total,
-        items: { ...items },
-        status: 'pending',
-        date: new Date().toISOString()
-      };
-    } else {
-      const newOrder = {
-        id: orderId,
-        date: new Date().toISOString(),
-        total: total,
-        items: { ...items },
-        status: 'pending'
-      };
-      orders.unshift(newOrder);
-    }
-    
+    orders.unshift(newOrder);
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-    console.log(`✅ Заказ #${orderId} сохранен в историю (${orders.length} всего)`);
-    return true;
+    console.log(`✅ Заказ #${orderId} сохранен локально (fallback)`);
   } catch (error) {
-    console.error('❌ Ошибка сохранения заказа:', error);
-    return false;
+    console.error('❌ Ошибка локального сохранения:', error);
   }
 }
 
-function loadOrderHistory() {
+// Загрузить историю заказов
+async function loadOrderHistory() {
   try {
-    const savedOrders = localStorage.getItem(ORDERS_KEY);
-    if (!savedOrders) {
-      console.log('📁 Нет сохраненных заказов в localStorage');
-      return [];
+    // Пробуем загрузить из Firestore
+    if (firestore && currentUser) {
+      const orders = await loadOrdersFromFirestore();
+      if (orders.length > 0) {
+        console.log(`✅ Загружено ${orders.length} заказов из Firestore`);
+        return orders;
+      }
     }
     
-    const orders = JSON.parse(savedOrders);
-    console.log(`📁 Загружено ${orders.length} заказов из localStorage`);
-    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Fallback: загружаем из localStorage
+    const localOrders = loadOrdersFromLocal();
+    console.log(`📁 Загружено ${localOrders.length} заказов из localStorage`);
+    return localOrders;
+    
+  } catch (error) {
+    console.error('❌ Ошибка загрузки истории:', error);
+    return loadOrdersFromLocal();
+  }
+}
+
+// Загрузка из Firestore
+async function loadOrdersFromFirestore() {
+  try {
+    if (!firestore || !currentUser) return [];
+    
+    const ordersRef = firestore.collection('orders');
+    let query = ordersRef.where('userId', '==', currentUser.id);
+    
+    const snapshot = await query.orderBy('createdAt', 'desc').limit(50).get();
+    
+    const orders = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      orders.push({
+        id: data.id,
+        date: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+        total: data.total,
+        items: data.items || {},
+        status: data.status || 'pending'
+      });
+    });
+    
     return orders;
   } catch (error) {
-    console.error('❌ Ошибка загрузки истории заказов:', error);
+    console.error('❌ Ошибка загрузки из Firestore:', error);
     return [];
   }
 }
 
-function updateOrderStatus(orderId, newStatus) {
+// Загрузка из localStorage
+function loadOrdersFromLocal() {
   try {
-    const orders = loadOrderHistory();
+    const savedOrders = localStorage.getItem(ORDERS_KEY);
+    if (!savedOrders) return [];
+    
+    const orders = JSON.parse(savedOrders);
+    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return orders;
+  } catch (error) {
+    console.error('❌ Ошибка загрузки из localStorage:', error);
+    return [];
+  }
+}
+
+// Обновить статус заказа
+async function updateOrderStatus(orderId, newStatus) {
+  try {
+    // Обновляем в Firestore
+    if (firestore) {
+      await firestore.collection('orders').doc(orderId).update({
+        status: newStatus,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log(`✅ Статус заказа #${orderId} обновлен в Firestore: "${newStatus}"`);
+    }
+    
+    // Обновляем локально
+    const orders = loadOrdersFromLocal();
     const orderIndex = orders.findIndex(order => order.id === orderId);
     
     if (orderIndex !== -1) {
       orders[orderIndex].status = newStatus;
       localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-      console.log(`✅ Статус заказа #${orderId} обновлен на "${newStatus}"`);
-      return true;
+      console.log(`✅ Статус заказа #${orderId} обновлен локально: "${newStatus}"`);
     }
-    return false;
-  } catch (error) {
-    console.error('❌ Ошибка обновления статуса заказа:', error);
-    return false;
-  }
-}
-
-function updateOrderIdInHistory(oldId, newId) {
-  try {
-    const orders = loadOrderHistory();
-    const orderIndex = orders.findIndex(order => order.id === oldId);
     
-    if (orderIndex !== -1) {
-      orders[orderIndex].id = newId;
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-      console.log(`🔄 ID заказа обновлен: ${oldId} → ${newId}`);
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('❌ Ошибка обновления ID заказа:', error);
-    return false;
-  }
-}
-
-function removeOrderFromHistory(orderId) {
-  try {
-    const orders = loadOrderHistory();
-    const filteredOrders = orders.filter(order => order.id !== orderId);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredOrders));
-    console.log(`🗑️ Заказ #${orderId} удален из истории`);
     return true;
   } catch (error) {
-    console.error('❌ Ошибка удаления заказа:', error);
+    console.error('❌ Ошибка обновления статуса:', error);
     return false;
   }
 }
 
-function getPluralEnding(count) {
-  if (count % 10 === 1 && count % 100 !== 11) return '';
-  if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return 'а';
-  return 'ов';
-}
-
-// ===== ФИКС ДЛЯ iOS =====
-if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
-  document.addEventListener('touchstart', function() {}, {passive: true});
-  
-  function setVH() {
-    let vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-  }
-  
-  setVH();
-  window.addEventListener('resize', setVH);
-  window.addEventListener('orientationchange', setVH);
-}
-
-// ===== Lottie анимации =====
-function loadAllLottieAnimations() {
-  const animations = {
-    'animHello': 'hello.json',
-    'animDownload': 'download.json',
-    'animMain': 'main.json',
-    'animWaiting': 'waiting.json',
-    'animCheckout': 'checkout.json',
-    'animBadPay': 'bad_pay.json'
-  };
-
-  for (const [elementId, animationFile] of Object.entries(animations)) {
-    const container = document.getElementById(elementId);
-    if (container) {
-      try {
-        lottie.loadAnimation({
-          container: container,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: animationFile
+// Синхронизация локальных данных с Firestore
+async function syncLocalOrdersWithFirestore() {
+  try {
+    if (!firestore || !currentUser) return;
+    
+    const localOrders = loadOrdersFromLocal();
+    if (localOrders.length === 0) return;
+    
+    console.log(`🔄 Синхронизация ${localOrders.length} локальных заказов с Firestore...`);
+    
+    for (const order of localOrders) {
+      // Проверяем, есть ли уже такой заказ в Firestore
+      const doc = await firestore.collection('orders').doc(order.id).get();
+      
+      if (!doc.exists) {
+        // Загружаем локальный заказ в Firestore
+        await firestore.collection('orders').doc(order.id).set({
+          id: order.id,
+          userId: currentUser.id,
+          username: currentUser.username || 'Пользователь',
+          total: order.total,
+          items: order.items,
+          status: order.status,
+          createdAt: firebase.firestore.Timestamp.fromDate(new Date(order.date)),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          source: 'local_sync'
         });
-      } catch (e) {
-        console.log(`Анимация ${animationFile} не загружена`);
+        console.log(`✅ Локальный заказ #${order.id} синхронизирован с Firestore`);
       }
     }
+    
+    console.log('✅ Синхронизация завершена');
+  } catch (error) {
+    console.error('❌ Ошибка синхронизации:', error);
   }
 }
 
@@ -1571,298 +1627,346 @@ document.getElementById('authBtn').addEventListener('click', function(e) {
 
 // ===== ПРОФИЛЬ И ЗАКАЗЫ =====
 async function loadProfileData() {
-  if (!currentUser) return;
-  
-  try {
-    const localOrders = loadOrderHistory();
-    displayOrdersInProfile(localOrders);
-    
-    const response = await fetch(`${API_URL}/api/auth/profile?userId=${currentUser.id}`);
-    const data = await response.json();
-    
-    if (data.success) {
-      document.getElementById('profileName').textContent = data.user.username;
-      
-      const profileIdElement = document.getElementById('profileId');
-      if (data.user.telegramUsername) {
-        profileIdElement.innerHTML = `<div>TG ID: ${data.user.tgId}</div><div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">@${data.user.telegramUsername}</div>`;
-      } else {
-        profileIdElement.innerHTML = `<div>TG ID: ${data.user.tgId}</div>`;
-      }
-      
-      const avatar = document.getElementById('profileAvatar');
-      if (data.user.avatarUrl) {
-        avatar.innerHTML = `<img src="${data.user.avatarUrl}" alt="${data.user.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-      } else if (data.user.username) {
-        avatar.textContent = data.user.username.charAt(0).toUpperCase();
-      }
-      
-      if (data.orders && data.orders.length > 0) {
-        const allOrders = [...data.orders];
-        localOrders.forEach(localOrder => {
-          if (!allOrders.some(serverOrder => serverOrder.id === localOrder.id)) {
-            allOrders.push(localOrder);
-          }
-        });
-        
-        allOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-        displayOrdersInProfile(allOrders);
-      }
-      
-    } else {
-      console.log('⚠️ Сервер недоступен, показываем локальные заказы');
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки профиля:', error);
-    const localOrders = loadOrderHistory();
-    displayOrdersInProfile(localOrders);
-  }
-}
-
-function displayOrdersInProfile(orders) {
-  const ordersList = document.getElementById('ordersList');
-  const ordersCount = document.getElementById('ordersCount');
-  
-  if (!ordersList || !ordersCount) return;
-  
-  if (orders.length > 0) {
-    ordersCount.textContent = `${orders.length} заказ${getPluralEnding(orders.length)}`;
-    
-    ordersList.innerHTML = orders.map(order => {
-      let statusText = '';
-      let statusClass = '';
-      
-      switch(order.status) {
-        case 'completed':
-          statusText = 'Завершен';
-          statusClass = 'completed';
-          break;
-        case 'failed':
-          statusText = 'Отменен';
-          statusClass = 'failed';
-          break;
-        case 'pending':
-        default:
-          statusText = 'В обработке';
-          statusClass = 'pending';
-      }
-      
-      const orderDate = new Date(order.date);
-      const formattedDate = orderDate.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      let itemsText = '';
-      if (order.items && typeof order.items === 'object') {
-        const itemEntries = Object.entries(order.items);
-        if (itemEntries.length > 0) {
-          itemsText = itemEntries.slice(0, 2).map(([id, qty]) => {
-            const product = PRODUCTS.find(p => p.id === id);
-            return product ? `${product.name} ×${qty}` : `Товар ×${qty}`;
-          }).join(', ');
-          
-          if (itemEntries.length > 2) {
-            itemsText += '...';
-          }
-        }
-      }
-      
-      const displayId = order.id.startsWith('temp_') ? order.id.replace('temp_', 'TEMP-') : order.id;
-      
-      return `
-        <div class="order-item" data-order-id="${order.id}">
-          <div class="order-header">
-            <div class="order-id">Заказ #${displayId}</div>
-            <div class="order-date">${formattedDate}</div>
-          </div>
-          ${itemsText ? `
-            <div class="order-items" style="
-              font-size: 12px;
-              color: rgba(255,255,255,0.7);
-              margin: 5px 0;
-              font-weight: 500;
-              line-height: 1.3;
-            ">
-              ${itemsText}
-            </div>
-          ` : ''}
-          <div class="order-details">
-            <div class="order-total">${fmtRub(order.total)}</div>
-            <div class="order-status ${statusClass}">${statusText}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    
-    setTimeout(() => {
-      document.querySelectorAll('.order-item').forEach(item => {
-        item.addEventListener('click', function() {
-          const orderId = this.getAttribute('data-order-id');
-          showOrderDetails(orderId);
-        });
-      });
-    }, 100);
-    
-  } else {
-    ordersCount.textContent = '0 заказов';
-    ordersList.innerHTML = '<div class="no-orders">У вас пока нет заказов</div>';
-  }
-}
-
-function showOrderDetails(orderId) {
-  const orders = loadOrderHistory();
-  const order = orders.find(o => o.id === orderId);
-  
-  if (!order) {
-    alert('Заказ не найден');
+  if (!currentUser) {
+    console.log('⚠️ Нет текущего пользователя для загрузки профиля');
     return;
   }
   
-  const modalHtml = `
-    <div class="order-details-modal" style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      padding: 20px;
-      box-sizing: border-box;
-    ">
-      <div style="
-        background: linear-gradient(180deg, #0b3c91, #124fa5);
-        border-radius: 20px;
-        padding: 24px;
-        max-width: 500px;
-        width: 100%;
-        max-height: 80vh;
-        overflow-y: auto;
-        color: white;
-        position: relative;
-      ">
-        <button id="closeOrderModal" style="
-          position: absolute;
-          top: 15px;
-          right: 15px;
-          background: rgba(255,255,255,0.1);
-          border: none;
-          color: white;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          font-size: 20px;
-          cursor: pointer;
-        ">×</button>
-        
-        <h3 style="margin: 0 0 20px 0; text-align: center;">Заказ #${order.id}</h3>
-        
-        <div style="margin-bottom: 20px;">
-          <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-bottom: 5px;">Дата создания:</div>
-          <div style="font-weight: 700;">${new Date(order.date).toLocaleString('ru-RU')}</div>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-bottom: 10px;">Товары:</div>
-          ${order.items && typeof order.items === 'object' 
-            ? Object.entries(order.items).map(([id, qty]) => {
-                const product = PRODUCTS.find(p => p.id === id);
-                return `
-                  <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 10px;
-                    background: rgba(255,255,255,0.05);
-                    border-radius: 10px;
-                    margin-bottom: 8px;
-                  ">
-                    <div>
-                      <div style="font-weight: 700;">${product ? product.name : `Товар ${id}`}</div>
-                      <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Количество: ${qty}</div>
-                    </div>
-                    <div style="font-weight: 700;">${product ? fmtRub(product.price * qty) : '—'}</div>
-                  </div>
-                `;
-              }).join('')
-            : '<div style="color: rgba(255,255,255,0.6);">Информация о товарах недоступна</div>'
-          }
-        </div>
-        
-        <div style="
-          border-top: 2px solid rgba(255,255,255,0.2);
-          padding-top: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 18px;
-          font-weight: 800;
-        ">
-          <div>Итого:</div>
-          <div>${fmtRub(order.total)}</div>
-        </div>
-        
-        <div style="
-          margin-top: 20px;
-          padding: 12px;
-          background: ${order.status === 'completed' ? 'rgba(0,200,83,0.2)' : 
-                      order.status === 'failed' ? 'rgba(255,45,85,0.2)' : 
-                      'rgba(255,215,0,0.2)'};
-          border-radius: 12px;
-          text-align: center;
-          font-weight: 700;
-          color: ${order.status === 'completed' ? '#00c853' : 
-                  order.status === 'failed' ? '#ff2d55' : 
-                  '#ffd700'};
-        ">
-          Статус: ${order.status === 'completed' ? 'Завершен' : 
-                   order.status === 'failed' ? 'Отменен' : 
-                   'В обработке'}
-        </div>
-      </div>
-    </div>
-  `;
-  
-  const modal = document.createElement('div');
-  modal.innerHTML = modalHtml;
-  document.body.appendChild(modal);
-  
-  modal.querySelector('#closeOrderModal').addEventListener('click', () => {
-    document.body.removeChild(modal);
-  });
-  
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      document.body.removeChild(modal);
+  try {
+    console.log('👤 Загружаем данные профиля для:', currentUser.id);
+    
+    // 1. Показываем загрузку в UI
+    const ordersList = document.getElementById('ordersList');
+    const ordersCount = document.getElementById('ordersCount');
+    
+    if (ordersList) {
+      ordersList.innerHTML = '<div style="color: rgba(255,255,255,0.6); text-align: center; padding: 30px; font-size: 16px;">⌛ Загрузка заказов...</div>';
     }
-  });
+    
+    if (ordersCount) {
+      ordersCount.textContent = '⌛ Загрузка...';
+    }
+    
+    // 2. Загружаем данные профиля с сервера
+    let profileData = null;
+    try {
+      const response = await fetch(`${API_URL}/api/auth/profile?userId=${currentUser.id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        profileData = data;
+        console.log('✅ Данные профиля загружены с сервера');
+      } else {
+        console.warn('⚠️ Сервер не вернул данные профиля:', data.error);
+      }
+    } catch (serverError) {
+      console.warn('⚠️ Ошибка загрузки профиля с сервера:', serverError);
+    }
+    
+    // 3. Обновляем UI профиля (если есть данные)
+    if (profileData && profileData.user) {
+      const user = profileData.user;
+      
+      // Имя пользователя
+      document.getElementById('profileName').textContent = user.username || 'Пользователь';
+      
+      // Telegram ID и username
+      const profileIdElement = document.getElementById('profileId');
+      if (user.telegramUsername) {
+        profileIdElement.innerHTML = `
+          <div>TG ID: ${user.tgId || '...'}</div>
+          <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">
+            @${user.telegramUsername}
+          </div>
+        `;
+      } else {
+        profileIdElement.innerHTML = `<div>TG ID: ${user.tgId || '...'}</div>`;
+      }
+      
+      // Аватар
+      const avatar = document.getElementById('profileAvatar');
+      if (user.avatarUrl) {
+        avatar.innerHTML = `
+          <img src="${user.avatarUrl}" 
+               alt="${user.username}" 
+               style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
+               onerror="this.onerror=null; this.parentElement.textContent='${user.username.charAt(0).toUpperCase()}'">
+        `;
+      } else if (user.username) {
+        avatar.textContent = user.username.charAt(0).toUpperCase();
+      }
+    } else {
+      // Используем данные из localStorage если нет данных с сервера
+      document.getElementById('profileName').textContent = currentUser.username || 'Пользователь';
+      
+      const avatar = document.getElementById('profileAvatar');
+      if (currentUser.username) {
+        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+      }
+    }
+    
+    // 4. Загружаем ВСЕ заказы (Firestore + локальные)
+    console.log('📦 Загружаем историю заказов...');
+    const orders = await loadOrders();
+    
+    // 5. Отображаем заказы
+    if (ordersList && ordersCount) {
+      if (orders.length > 0) {
+        ordersCount.textContent = `${orders.length} заказ${getPluralEnding(orders.length)}`;
+        displayOrdersInProfile(orders);
+        
+        // 6. Показываем источник данных
+        const firestoreOrders = orders.filter(o => o.source === 'firestore');
+        const localOrders = orders.filter(o => o.source === 'local');
+        
+        console.log(`📊 Итог: ${orders.length} заказов (Firestore: ${firestoreOrders.length}, Local: ${localOrders.length})`);
+        
+        // 7. Синхронизируем локальные заказы с Firestore (в фоне)
+        if (firestore && localOrders.length > 0) {
+          setTimeout(() => {
+            syncLocalOrdersWithFirestore(localOrders);
+          }, 3000);
+        }
+        
+      } else {
+        ordersCount.textContent = '0 заказов';
+        ordersList.innerHTML = `
+          <div class="no-orders">
+            <div style="font-size: 18px; margin-bottom: 10px;">📭</div>
+            <div style="font-size: 16px; margin-bottom: 8px;">У вас пока нет заказов</div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.5);">
+              Совершите первую покупку чтобы начать историю!
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // 8. Если есть заказы с сервера, обновляем локальные данные
+    if (profileData && profileData.orders && profileData.orders.length > 0) {
+      console.log(`🔄 Обновляем локальную историю с сервера: ${profileData.orders.length} заказов`);
+      updateLocalOrdersWithServerData(profileData.orders);
+    }
+    
+    console.log('✅ Загрузка профиля завершена');
+    
+  } catch (error) {
+    console.error('❌ Критическая ошибка загрузки профиля:', error);
+    
+    // Fallback: показываем только локальные данные
+    const ordersList = document.getElementById('ordersList');
+    const ordersCount = document.getElementById('ordersCount');
+    
+    if (ordersList && ordersCount) {
+      try {
+        const localOrders = loadOrdersFromLocal();
+        
+        if (localOrders.length > 0) {
+          ordersCount.textContent = `${localOrders.length} заказ${getPluralEnding(localOrders.length)} (оффлайн)`;
+          displayOrdersInProfile(localOrders);
+        } else {
+          ordersCount.textContent = 'Ошибка загрузки';
+          ordersList.innerHTML = `
+            <div class="no-orders" style="color: rgba(255,255,255,0.5);">
+              <div style="font-size: 18px; margin-bottom: 10px;">⚠️</div>
+              <div>Не удалось загрузить историю</div>
+              <div style="font-size: 12px; margin-top: 8px;">Попробуйте позже</div>
+            </div>
+          `;
+        }
+      } catch (fallbackError) {
+        console.error('❌ Ошибка fallback:', fallbackError);
+        ordersCount.textContent = 'Ошибка';
+        ordersList.innerHTML = '<div style="color: #ff6b6b;">Ошибка загрузки данных</div>';
+      }
+    }
+  }
 }
 
-document.getElementById('logoutBtn').addEventListener('click', async function() {
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+
+// Обновить локальные заказы данными с сервера
+function updateLocalOrdersWithServerData(serverOrders) {
   try {
-    await fetch(`${API_URL}/api/auth/logout`, {
-      method: 'POST'
+    const localOrders = loadOrdersFromLocal();
+    const updatedOrders = [...localOrders];
+    
+    serverOrders.forEach(serverOrder => {
+      const existingIndex = updatedOrders.findIndex(o => o.id === serverOrder.id);
+      
+      if (existingIndex !== -1) {
+        // Обновляем существующий заказ
+        updatedOrders[existingIndex] = {
+          ...updatedOrders[existingIndex],
+          ...serverOrder,
+          source: 'server_sync'
+        };
+      } else {
+        // Добавляем новый заказ
+        updatedOrders.push({
+          ...serverOrder,
+          source: 'server_sync'
+        });
+      }
     });
     
-    localStorage.removeItem('duck_user');
-    currentUser = null;
-    updateAuthButton();
-    show('menu');
+    // Сортируем по дате
+    updatedOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Сохраняем
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
+    console.log(`✅ Локальная история обновлена: ${updatedOrders.length} заказов`);
+    
   } catch (error) {
-    console.error('Ошибка выхода:', error);
+    console.error('❌ Ошибка обновления локальных данных:', error);
   }
-});
+}
 
-document.getElementById('backToMenuBtn').addEventListener('click', function() {
-  show('menu');
-});
+// Синхронизация локальных заказов с Firestore
+async function syncLocalOrdersWithFirestore(localOrders) {
+  if (!firestore || !currentUser) return;
+  
+  try {
+    console.log(`🔄 Синхронизируем ${localOrders.length} локальных заказов с Firestore...`);
+    
+    let syncedCount = 0;
+    
+    for (const order of localOrders) {
+      // Пропускаем временные заказы
+      if (order.id.startsWith('temp_')) continue;
+      
+      try {
+        // Проверяем, есть ли уже такой заказ в Firestore
+        const doc = await firestore.collection('orders').doc(order.id).get();
+        
+        if (!doc.exists) {
+          // Загружаем в Firestore
+          await firestore.collection('orders').doc(order.id).set({
+            id: order.id,
+            userId: currentUser.id,
+            username: currentUser.username || 'Пользователь',
+            total: order.total,
+            items: order.items,
+            status: order.status || 'pending',
+            createdAt: firebase.firestore.Timestamp.fromDate(new Date(order.date)),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            source: 'local_sync'
+          });
+          
+          syncedCount++;
+          console.log(`✅ Заказ #${order.id} синхронизирован с Firestore`);
+        }
+      } catch (orderError) {
+        console.warn(`⚠️ Не удалось синхронизировать заказ #${order.id}:`, orderError);
+      }
+      
+      // Небольшая задержка чтобы не перегружать
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log(`✅ Синхронизация завершена: ${syncedCount} заказов загружено в Firestore`);
+    
+  } catch (error) {
+    console.error('❌ Ошибка синхронизации с Firestore:', error);
+  }
+}
+
+// Отобразить заказы в профиле
+function displayOrdersInProfile(orders) {
+  const ordersList = document.getElementById('ordersList');
+  if (!ordersList) return;
+  
+  ordersList.innerHTML = orders.map(order => {
+    let statusText = '';
+    let statusClass = '';
+    
+    switch(order.status) {
+      case 'completed':
+        statusText = 'Завершен';
+        statusClass = 'completed';
+        break;
+      case 'failed':
+        statusText = 'Отменен';
+        statusClass = 'failed';
+        break;
+      case 'pending':
+      default:
+        statusText = 'В обработке';
+        statusClass = 'pending';
+    }
+    
+    const orderDate = new Date(order.date);
+    const formattedDate = orderDate.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Форматируем ID для отображения (убираем префикс temp_)
+    const displayId = order.id.startsWith('temp_') 
+      ? order.id.replace('temp_', 'ВРЕМ-') 
+      : order.id;
+    
+    // Информация о товарах
+    let itemsInfo = '';
+    if (order.items && typeof order.items === 'object') {
+      const itemEntries = Object.entries(order.items);
+      if (itemEntries.length > 0) {
+        const firstItem = itemEntries[0];
+        const product = PRODUCTS.find(p => p.id === firstItem[0]);
+        const itemName = product ? product.name : `Товар ×${firstItem[1]}`;
+        
+        itemsInfo = `
+          <div class="order-items" style="
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin: 5px 0;
+            font-weight: 500;
+            line-height: 1.3;
+          ">
+            ${itemName}${itemEntries.length > 1 ? ` + ещё ${itemEntries.length - 1}` : ''}
+          </div>
+        `;
+      }
+    }
+    
+    // Индикатор источника данных
+    let sourceIndicator = '';
+    if (order.source === 'local') {
+      sourceIndicator = '<div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px;">(локально)</div>';
+    } else if (order.source === 'server_sync') {
+      sourceIndicator = '<div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px;">(с сервера)</div>';
+    }
+    
+    return `
+      <div class="order-item" data-order-id="${order.id}" data-status="${order.status}">
+        <div class="order-header">
+          <div class="order-id">Заказ #${displayId}</div>
+          <div class="order-date">${formattedDate}</div>
+        </div>
+        ${itemsInfo}
+        ${sourceIndicator}
+        <div class="order-details">
+          <div class="order-total">${fmtRub(order.total)}</div>
+          <div class="order-status ${statusClass}">${statusText}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Добавляем обработчики кликов после рендера
+  setTimeout(() => {
+    document.querySelectorAll('.order-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        const status = this.getAttribute('data-status');
+        showOrderDetails(orderId, status);
+      });
+    });
+  }, 50);
+}
 
 // ===== ТОВАРЫ =====
 const DEFAULT_PRODUCTS = [
@@ -2294,7 +2398,7 @@ document.getElementById('backToMenu').addEventListener('click', () => {
   show('menu');
 });
 
-// ===== ОПЛАТА =====
+// ===== ОПЛАТА (С FIRESTORE) =====
 document.getElementById('proceedToPay').addEventListener('click', async () => {
   const total = cartSum();
   if (total < 10 || total > 10000) return;
@@ -2303,8 +2407,8 @@ document.getElementById('proceedToPay').addEventListener('click', async () => {
   const tempOrderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   try {
-    // СОХРАНЯЕМ ЗАКАЗ В ИСТОРИЮ СРАЗУ (временный)
-    saveOrderToHistory(tempOrderId, total, cart);
+    // СОХРАНЯЕМ ЗАКАЗ В FIRESTORE СРАЗУ (временный)
+    await saveOrderToFirestore(tempOrderId, total, cart, currentUser ? currentUser.id : null);
     
     const response = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
@@ -2322,8 +2426,8 @@ document.getElementById('proceedToPay').addEventListener('click', async () => {
       currentOrderId = data.orderId;
       currentPaymentUrl = data.paymentUrl;
       
-      // ОБНОВЛЯЕМ ID заказа на настоящий
-      updateOrderIdInHistory(tempOrderId, data.orderId);
+      // ОБНОВЛЯЕМ ID заказа в Firestore
+      await updateOrderIdInFirestore(tempOrderId, data.orderId);
       
       updateOrderNumberElements(currentOrderId);
       
@@ -2339,16 +2443,75 @@ document.getElementById('proceedToPay').addEventListener('click', async () => {
       
     } else {
       // Удаляем временный заказ если ошибка
-      removeOrderFromHistory(tempOrderId);
+      await deleteOrderFromFirestore(tempOrderId);
+      removeOrderFromLocal(tempOrderId);
       alert('Ошибка при создании заказа: ' + (data.error || 'неизвестная ошибка'));
     }
   } catch (error) {
     // Удаляем временный заказ если ошибка
-    removeOrderFromHistory(tempOrderId);
+    await deleteOrderFromFirestore(tempOrderId);
+    removeOrderFromLocal(tempOrderId);
     console.error('❌ Ошибка:', error);
     alert('Ошибка соединения с сервером');
   }
 });
+
+// Функция обновления ID в Firestore
+async function updateOrderIdInFirestore(oldId, newId) {
+  try {
+    if (!firestore) return false;
+    
+    // Получаем старый заказ
+    const oldDoc = await firestore.collection('orders').doc(oldId).get();
+    if (!oldDoc.exists) return false;
+    
+    const oldData = oldDoc.data();
+    
+    // Создаем новый документ с новым ID
+    await firestore.collection('orders').doc(newId).set({
+      ...oldData,
+      id: newId,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Удаляем старый документ
+    await firestore.collection('orders').doc(oldId).delete();
+    
+    console.log(`🔄 ID заказа обновлен в Firestore: ${oldId} → ${newId}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка обновления ID в Firestore:', error);
+    return false;
+  }
+}
+
+// Удаление заказа из Firestore
+async function deleteOrderFromFirestore(orderId) {
+  try {
+    if (!firestore) return false;
+    
+    await firestore.collection('orders').doc(orderId).delete();
+    console.log(`🗑️ Заказ #${orderId} удален из Firestore`);
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка удаления из Firestore:', error);
+    return false;
+  }
+}
+
+// Удаление из localStorage
+function removeOrderFromLocal(orderId) {
+  try {
+    const orders = loadOrdersFromLocal();
+    const filteredOrders = orders.filter(order => order.id !== orderId);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredOrders));
+    console.log(`🗑️ Заказ #${orderId} удален из localStorage`);
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка удаления из localStorage:', error);
+    return false;
+  }
+}
 
 // ===== КНОПКИ ВОЗВРАТА =====
 document.getElementById('toMenuFromBadPay').addEventListener('click', () => {
@@ -2410,7 +2573,7 @@ async function verifyAuthToken(token) {
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   console.log('🚀 Инициализация сайта...');
   
   // Инициализируем корзину
@@ -2425,10 +2588,41 @@ document.addEventListener('DOMContentLoaded', function() {
   if (PRODUCTS.length === 0) {
     loadProducts();
   }
+  
+  // Асинхронно инициализируем Firebase (не блокируем основной поток)
+  setTimeout(async () => {
+    try {
+      await initializeFirebase();
+      
+      // Если Firebase успешно инициализирован и есть пользователь
+      if (firestore && currentUser) {
+        // Загружаем и показываем заказы из Firestore
+        const orders = await loadOrders();
+        if (orders.length > 0) {
+          console.log('✅ Заказы загружены из Firebase');
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Firebase не будет использоваться:', error);
+    }
+  }, 1000);
 });
 
-// Очистить корзину
-document.getElementById('clearCart').addEventListener('click', clearCart);
-</script>
-</body>
-</html>
+// Обновленная функция checkAuth с инициализацией Firebase
+function checkAuth() {
+  const savedUser = localStorage.getItem('duck_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      updateAuthButton();
+      
+      // После загрузки пользователя, инициализируем Firebase
+      setTimeout(() => {
+        initializeFirebase();
+      }, 500);
+    } catch (e) {
+      console.error('Ошибка парсинга пользователя:', e);
+      localStorage.removeItem('duck_user');
+    }
+  }
+}
