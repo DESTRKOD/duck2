@@ -104,7 +104,7 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* Кнопка входа/профиля */
+/* ===== КНОПКА ВХОДА/ПРОФИЛЯ ===== */
 .auth-btn {
   position: relative;
   min-width: 44px;
@@ -117,7 +117,7 @@ html, body {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  padding: 0 12px;
+  padding: 0 16px; /* Увеличил padding */
   gap: 8px;
   color: #fff;
   font-weight: 700;
@@ -461,7 +461,7 @@ html, body {
   pointer-events: none;
 }
 
-/* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ (ПЛАНШЕТЫ) ===== */
 @media (max-width: 768px) {
   .menu-header {
     padding: 12px 14px;
@@ -515,16 +515,17 @@ html, body {
     font-size: 10px;
   }
   
+  /* ИЗМЕНЕНИЕ: показываем текст на кнопке профиля */
   .auth-btn {
-    min-width: 40px;
+    min-width: auto;
     height: 40px;
-    padding: 0 8px;
-    font-size: 0;
-    gap: 0;
+    padding: 0 12px;
+    font-size: 14px;
+    gap: 6px;
   }
   
   .auth-btn span {
-    display: none;
+    display: inline;
   }
   
   .cart-btn {
@@ -558,9 +559,34 @@ html, body {
     width: 200px;
     height: 200px;
   }
+  
+  /* Адаптивность для корзины */
+  .cart-sheet {
+    max-width: 90%;
+  }
+  
+  .cart-head h3 {
+    font-size: 18px;
+  }
+  
+  .cart-action {
+    font-size: 14px;
+    height: 42px;
+  }
+  
+  /* Адаптивность для профиля */
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
+  }
+  
+  .profile-name {
+    font-size: 20px;
+  }
 }
 
-/* Мобильная версия (маленькие экраны) */
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ (СМАРТФОНЫ) ===== */
 @media (max-width: 480px) {
   .row-two {
     grid-template-columns: 1fr;
@@ -599,9 +625,65 @@ html, body {
   .menu-header-title {
     font-size: 18px;
   }
+  
+  /* ИЗМЕНЕНИЕ: уменьшаем шрифт но показываем текст */
+  .auth-btn {
+    padding: 0 10px;
+    font-size: 13px;
+    gap: 4px;
+  }
+  
+  .auth-btn span {
+    display: inline;
+  }
+  
+  .cart-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .cart-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Корзина */
+  .cart-row {
+    grid-template-columns: 50px 1fr auto;
+    gap: 8px;
+    padding: 8px;
+  }
+  
+  .cart-thumb {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .cart-name {
+    font-size: 13px;
+  }
+  
+  .qty-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+  
+  /* Профиль */
+  .profile-section {
+    padding: 15px;
+  }
+  
+  .profile-actions {
+    flex-direction: column;
+  }
+  
+  .order-item {
+    padding: 12px;
+  }
 }
 
-/* Очень маленькие экраны */
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ ===== */
 @media (max-width: 360px) {
   .shop-card {
     height: 190px;
@@ -635,6 +717,16 @@ html, body {
     font-size: 20px;
   }
   
+  /* ИЗМЕНЕНИЕ: еще уменьшаем но все равно показываем текст */
+  .auth-btn {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  
+  .auth-btn span {
+    display: inline;
+  }
+  
   .auth-btn, .cart-btn {
     width: 36px;
     height: 36px;
@@ -644,14 +736,57 @@ html, body {
     width: 18px;
     height: 18px;
   }
+  
+  /* Корзина */
+  .cart-sheet {
+    max-width: 95%;
+  }
+  
+  .cart-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .cart-action {
+    height: 40px;
+  }
+  
+  /* Поля ввода */
+  .input-field {
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+  
+  .button {
+    padding: 12px 28px;
+    font-size: 15px;
+  }
 }
 
-/* Десктоп - сетка 2 в ряд */
+/* ===== ПЛАНШЕТНАЯ ВЕРСИЯ (ГОРИЗОНТАЛЬНАЯ СЕТКА) ===== */
+@media (min-width: 481px) and (max-width: 768px) {
+  .row-two {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  /* ИЗМЕНЕНИЕ: показываем полный текст */
+  .auth-btn {
+    min-width: auto;
+    padding: 0 14px;
+  }
+  
+  .auth-btn span {
+    display: inline;
+    font-size: 14px;
+  }
+}
+
+/* ===== ДЕСКТОП - СЕТКА 2 В РЯД ===== */
 @media (min-width: 769px) {
   .menu-scroll {
     padding: 18px 16px 40px;
   }
   
+  /* ИЗМЕНЕНИЕ: десктопный вариант */
   .auth-btn {
     min-width: auto;
     padding: 0 16px;
@@ -659,23 +794,6 @@ html, body {
   
   .auth-btn span {
     display: inline;
-  }
-}
-
-/* Планшетная версия */
-@media (min-width: 481px) and (max-width: 768px) {
-  .row-two {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .auth-btn {
-    min-width: auto;
-    padding: 0 10px;
-  }
-  
-  .auth-btn span {
-    display: inline;
-    font-size: 14px;
   }
 }
 
@@ -1097,7 +1215,7 @@ html, body {
         <svg viewBox="0 0 24 24">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
-        <span id="authBtnText">Войти</span>
+        <span id="authBtnText">Войти</span> <!-- Важно чтобы span был -->
       </a>
 
       <button class="cart-btn" id="openCart" aria-label="Корзина">
@@ -1353,22 +1471,35 @@ function checkAuth() {
 }
 
 function updateAuthButton() {
+  const authBtn = document.getElementById('authBtn');
+  const authBtnText = document.getElementById('authBtnText');
+  
+  if (!authBtn || !authBtnText) return;
+  
   if (currentUser) {
-    authBtnText.textContent = 'Профиль';
-    // Обновляем аватар первой буквой имени
-    const avatar = document.getElementById('profileAvatar');
-    if (avatar && currentUser.username) {
-      if (currentUser.avatarUrl) {
-        avatar.innerHTML = `<img src="${currentUser.avatarUrl}" alt="${currentUser.username}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-      } else {
-        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
-      }
+    // Убираем href если авторизованы
+    authBtn.removeAttribute('href');
+    authBtn.style.cursor = 'pointer';
+    
+    // Показываем имя пользователя (укороченное на мобильных)
+    if (window.innerWidth <= 768 && currentUser.username) {
+      // На мобильных показываем первые 6 символов имени
+      const shortName = currentUser.username.length > 6 
+        ? currentUser.username.substring(0, 6) + '...' 
+        : currentUser.username;
+      authBtnText.textContent = shortName;
+    } else if (currentUser.username) {
+      // На десктопе полное имя
+      authBtnText.textContent = currentUser.username;
+    } else {
+      authBtnText.textContent = 'Профиль';
     }
   } else {
+    // Возвращаем ссылку на reg_log.html
+    authBtn.href = 'reg_log.html';
     authBtnText.textContent = 'Войти';
   }
 }
-
 // Обработка клика на кнопку входа/профиля
 authBtn.addEventListener('click', function(e) {
   if (currentUser) {
