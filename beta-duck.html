@@ -1369,6 +1369,16 @@ function getPluralEnding(number) {
 // ===== LOTTIE АНИМАЦИИ =====
 function loadAllLottieAnimations() {
   try {
+    // Используем публично доступные Lottie анимации
+    const animations = {
+      hello: 'https://assets2.lottiefiles.com/packages/lf20_1pxqjqps.json',
+      download: 'https://assets2.lottiefiles.com/packages/lf20_usmfx6bp.json',
+      main: 'https://assets2.lottiefiles.com/packages/lf20_khtt8ejx.json',
+      waiting: 'https://assets2.lottiefiles.com/packages/lf20_puciaevh.json',
+      checkout: 'https://assets2.lottiefiles.com/packages/lf20_0fhjvtlz.json',
+      badPay: 'https://assets2.lottiefiles.com/packages/lf20_dews0pqv.json'
+    };
+    
     // Загрузка анимации приветствия
     if (document.getElementById('animHello')) {
       lottie.loadAnimation({
@@ -1376,7 +1386,7 @@ function loadAllLottieAnimations() {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: 'https://assets6.lottiefiles.com/packages/lf20_xtpaqquy.json'
+        path: animations.hello
       });
     }
     
@@ -1387,7 +1397,7 @@ function loadAllLottieAnimations() {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: 'https://assets6.lottiefiles.com/packages/lf20_hc5jhc7r.json'
+        path: animations.download
       });
     }
     
@@ -1398,7 +1408,7 @@ function loadAllLottieAnimations() {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: 'https://assets6.lottiefiles.com/packages/lf20_akr0gj8q.json'
+        path: animations.main
       });
     }
     
@@ -1409,7 +1419,7 @@ function loadAllLottieAnimations() {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: 'https://assets6.lottiefiles.com/packages/lf20_7rHRbT.json'
+        path: animations.waiting
       });
     }
     
@@ -1420,7 +1430,7 @@ function loadAllLottieAnimations() {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: 'https://assets6.lottiefiles.com/packages/lf20_bnopqfew.json'
+        path: animations.checkout
       });
     }
     
@@ -1431,13 +1441,20 @@ function loadAllLottieAnimations() {
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        path: 'https://assets6.lottiefiles.com/packages/lf20_6wutsrox.json'
+        path: animations.badPay
       });
     }
     
     console.log('🎬 Lottie анимации загружены');
   } catch (error) {
     console.warn('⚠️ Ошибка загрузки Lottie анимаций:', error);
+    
+    // Если анимации не загрузились, показываем заглушки
+    document.querySelectorAll('.sticker').forEach(sticker => {
+      if (!sticker.innerHTML) {
+        sticker.innerHTML = '<div style="color: white; font-size: 50px; text-align: center;">🎁</div>';
+      }
+    });
   }
 }
 
@@ -1501,15 +1518,17 @@ function saveOrderToLocal(orderId, total, items) {
   }
 }
 
-// Загрузка из Firestore
+// Загрузка из Firestore (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 async function loadOrdersFromFirestore() {
   try {
     if (!firestore || !currentUser) return [];
     
     const ordersRef = firestore.collection('orders');
-    let query = ordersRef.where('userId', '==', currentUser.id);
     
-    const snapshot = await query.orderBy('createdAt', 'desc').limit(50).get();
+    // Используем простой запрос без сортировки, чтобы избежать ошибки индекса
+    const snapshot = await ordersRef
+      .where('userId', '==', currentUser.id)
+      .get();
     
     const orders = [];
     snapshot.forEach(doc => {
@@ -1523,9 +1542,18 @@ async function loadOrdersFromFirestore() {
       });
     });
     
+    // Сортируем локально после получения данных
+    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
     return orders;
   } catch (error) {
     console.error('❌ Ошибка загрузки из Firestore:', error);
+    
+    // Если ошибка связана с индексом, предлагаем создать его
+    if (error.code === 'failed-precondition') {
+      console.warn('⚠️ Требуется создать индекс в Firestore. Перейдите по ссылке из ошибки чтобы создать индекс.');
+    }
+    
     return [];
   }
 }
