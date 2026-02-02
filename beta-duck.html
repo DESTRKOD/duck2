@@ -1002,17 +1002,23 @@ html, body {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+  gap: 10px; /* ДОБАВЛЕН ОТСТУП МЕЖДУ НОМЕРОМ И ДАТОЙ */
 }
 
 .order-id {
   color: #ffd700;
   font-weight: 700;
   font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .order-date {
   color: rgba(255,255,255,0.7);
   font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .order-details {
@@ -1360,6 +1366,81 @@ function getPluralEnding(number) {
   }
 }
 
+// ===== LOTTIE АНИМАЦИИ =====
+function loadAllLottieAnimations() {
+  try {
+    // Загрузка анимации приветствия
+    if (document.getElementById('animHello')) {
+      lottie.loadAnimation({
+        container: document.getElementById('animHello'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets6.lottiefiles.com/packages/lf20_xtpaqquy.json'
+      });
+    }
+    
+    // Загрузка анимации загрузки
+    if (document.getElementById('animDownload')) {
+      lottie.loadAnimation({
+        container: document.getElementById('animDownload'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets6.lottiefiles.com/packages/lf20_hc5jhc7r.json'
+      });
+    }
+    
+    // Загрузка главной анимации
+    if (document.getElementById('animMain')) {
+      lottie.loadAnimation({
+        container: document.getElementById('animMain'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets6.lottiefiles.com/packages/lf20_akr0gj8q.json'
+      });
+    }
+    
+    // Загрузка анимации ожидания
+    if (document.getElementById('animWaiting')) {
+      lottie.loadAnimation({
+        container: document.getElementById('animWaiting'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets6.lottiefiles.com/packages/lf20_7rHRbT.json'
+      });
+    }
+    
+    // Загрузка анимации оформления заказа
+    if (document.getElementById('animCheckout')) {
+      lottie.loadAnimation({
+        container: document.getElementById('animCheckout'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets6.lottiefiles.com/packages/lf20_bnopqfew.json'
+      });
+    }
+    
+    // Загрузка анимации неудачной оплаты
+    if (document.getElementById('animBadPay')) {
+      lottie.loadAnimation({
+        container: document.getElementById('animBadPay'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://assets6.lottiefiles.com/packages/lf20_6wutsrox.json'
+      });
+    }
+    
+    console.log('🎬 Lottie анимации загружены');
+  } catch (error) {
+    console.warn('⚠️ Ошибка загрузки Lottie анимаций:', error);
+  }
+}
+
 // ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ (FIRESTORE) =====
 
 // Сохранить заказ в Firestore
@@ -1474,7 +1555,7 @@ async function loadOrders() {
       try {
         const firestoreOrders = await loadOrdersFromFirestore();
         firestoreOrders.forEach(order => {
-          order.source = 'firestore';
+          // Убираем source из заказов - не показываем пользователю источник
           allOrders.push(order);
         });
         console.log(`✅ Загружено ${firestoreOrders.length} заказов из Firestore`);
@@ -1490,7 +1571,6 @@ async function loadOrders() {
         // Проверяем, нет ли такого же заказа уже в списке
         const exists = allOrders.some(o => o.id === order.id);
         if (!exists) {
-          order.source = 'local';
           allOrders.push(order);
         }
       });
@@ -1537,43 +1617,6 @@ async function updateOrderStatus(orderId, newStatus) {
   } catch (error) {
     console.error('❌ Ошибка обновления статуса:', error);
     return false;
-  }
-}
-
-// Синхронизация локальных данных с Firestore
-async function syncLocalOrdersWithFirestore() {
-  try {
-    if (!firestore || !currentUser) return;
-    
-    const localOrders = loadOrdersFromLocal();
-    if (localOrders.length === 0) return;
-    
-    console.log(`🔄 Синхронизация ${localOrders.length} локальных заказов с Firestore...`);
-    
-    for (const order of localOrders) {
-      // Проверяем, есть ли уже такой заказ в Firestore
-      const doc = await firestore.collection('orders').doc(order.id).get();
-      
-      if (!doc.exists) {
-        // Загружаем локальный заказ в Firestore
-        await firestore.collection('orders').doc(order.id).set({
-          id: order.id,
-          userId: currentUser.id,
-          username: currentUser.username || 'Пользователь',
-          total: order.total,
-          items: order.items,
-          status: order.status,
-          createdAt: firebase.firestore.Timestamp.fromDate(new Date(order.date)),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          source: 'local_sync'
-        });
-        console.log(`✅ Локальный заказ #${order.id} синхронизирован с Firestore`);
-      }
-    }
-    
-    console.log('✅ Синхронизация завершена');
-  } catch (error) {
-    console.error('❌ Ошибка синхронизации:', error);
   }
 }
 
@@ -1797,19 +1840,6 @@ async function loadProfileData() {
         ordersCount.textContent = `${orders.length} заказ${getPluralEnding(orders.length)}`;
         displayOrdersInProfile(orders);
         
-        // 7. Показываем источник данных
-        const firestoreOrders = orders.filter(o => o.source === 'firestore');
-        const localOrders = orders.filter(o => o.source === 'local');
-        
-        console.log(`📊 Итог: ${orders.length} заказов (Firestore: ${firestoreOrders.length}, Local: ${localOrders.length})`);
-        
-        // 8. Синхронизируем локальные заказы с Firestore (в фоне)
-        if (firestore && localOrders.length > 0) {
-          setTimeout(() => {
-            syncLocalOrdersWithFirestore(localOrders);
-          }, 3000);
-        }
-        
       } else {
         ordersCount.textContent = '0 заказов';
         ordersList.innerHTML = `
@@ -1822,12 +1852,6 @@ async function loadProfileData() {
           </div>
         `;
       }
-    }
-    
-    // 9. Если есть заказы с сервера, обновляем локальные данные
-    if (profileData && profileData.orders && profileData.orders.length > 0) {
-      console.log(`🔄 Обновляем локальную историю с сервера: ${profileData.orders.length} заказов`);
-      updateLocalOrdersWithServerData(profileData.orders);
     }
     
     console.log('✅ Загрузка профиля завершена');
@@ -1844,7 +1868,7 @@ async function loadProfileData() {
         const localOrders = loadOrdersFromLocal();
         
         if (localOrders.length > 0) {
-          ordersCount.textContent = `${localOrders.length} заказ${getPluralEnding(localOrders.length)} (оффлайн)`;
+          ordersCount.textContent = `${localOrders.length} заказ${getPluralEnding(localOrders.length)}`;
           displayOrdersInProfile(localOrders);
         } else {
           ordersCount.textContent = 'Ошибка загрузки';
@@ -1862,43 +1886,6 @@ async function loadProfileData() {
         ordersList.innerHTML = '<div style="color: #ff6b6b;">Ошибка загрузки данных</div>';
       }
     }
-  }
-}
-
-// Обновить локальные заказы данными с сервера
-function updateLocalOrdersWithServerData(serverOrders) {
-  try {
-    const localOrders = loadOrdersFromLocal();
-    const updatedOrders = [...localOrders];
-    
-    serverOrders.forEach(serverOrder => {
-      const existingIndex = updatedOrders.findIndex(o => o.id === serverOrder.id);
-      
-      if (existingIndex !== -1) {
-        // Обновляем существующий заказ
-        updatedOrders[existingIndex] = {
-          ...updatedOrders[existingIndex],
-          ...serverOrder,
-          source: 'server_sync'
-        };
-      } else {
-        // Добавляем новый заказ
-        updatedOrders.push({
-          ...serverOrder,
-          source: 'server_sync'
-        });
-      }
-    });
-    
-    // Сортируем по дате
-    updatedOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    // Сохраняем
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(updatedOrders));
-    console.log(`✅ Локальная история обновлена: ${updatedOrders.length} заказов`);
-    
-  } catch (error) {
-    console.error('❌ Ошибка обновления локальных данных:', error);
   }
 }
 
@@ -1963,14 +1950,6 @@ function displayOrdersInProfile(orders) {
       }
     }
     
-    // Индикатор источника данных
-    let sourceIndicator = '';
-    if (order.source === 'local') {
-      sourceIndicator = '<div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px;">(локально)</div>';
-    } else if (order.source === 'server_sync') {
-      sourceIndicator = '<div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px;">(с сервера)</div>';
-    }
-    
     return `
       <div class="order-item" data-order-id="${order.id}" data-status="${order.status}">
         <div class="order-header">
@@ -1978,7 +1957,6 @@ function displayOrdersInProfile(orders) {
           <div class="order-date">${formattedDate}</div>
         </div>
         ${itemsInfo}
-        ${sourceIndicator}
         <div class="order-details">
           <div class="order-total">${fmtRub(order.total)}</div>
           <div class="order-status ${statusClass}">${statusText}</div>
@@ -2642,15 +2620,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   cart = loadCart();
   
   // Загружаем анимации Lottie
-  function loadAllLottieAnimations() {
-    try {
-      // Заглушка - добавьте свою логику загрузки анимаций
-      console.log('🎬 Lottie анимации загружены');
-    } catch (error) {
-      console.warn('⚠️ Ошибка загрузки Lottie анимаций:', error);
-    }
-  }
-  
   loadAllLottieAnimations();
   updateBadge();
   checkAuth();
@@ -2665,20 +2634,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   setTimeout(async () => {
     try {
       await initializeFirebase();
+      console.log('✅ Firebase готов к использованию');
       
-      // Если Firebase успешно инициализирован и есть пользователь
-      if (firestore && currentUser) {
-        // Загружаем и показываем заказы из Firestore
-        const orders = await loadOrders();
-        if (orders.length > 0) {
-          console.log('✅ Заказы загружены из Firebase');
-        }
-        
-        // Синхронизируем локальные заказы с Firestore
-        setTimeout(() => {
-          syncLocalOrdersWithFirestore();
-        }, 2000);
-      }
     } catch (error) {
       console.warn('⚠️ Firebase не будет использоваться:', error.message);
     }
