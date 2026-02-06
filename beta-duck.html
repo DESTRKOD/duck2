@@ -126,6 +126,43 @@ html, body {
   flex: 1;
 }
 
+/* Кнопка входа/профиля */
+.auth-btn {
+  position: relative;
+  min-width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255,255,255,.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0 16px;
+  gap: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.auth-btn:active { 
+  transform: scale(.97); 
+}
+
+.auth-btn:hover {
+  background: rgba(255,255,255,.20);
+}
+
+.auth-btn svg { 
+  width: 22px; 
+  height: 22px; 
+  fill: #fff;
+  flex-shrink: 0;
+}
+
 /* Кнопка корзины */
 .cart-btn {
   position: relative;
@@ -386,47 +423,6 @@ html, body {
   border-radius: 12px;
   max-width: 400px;
   width: 100%;
-}
-
-/* ===== ПОЛЯ ВВОДА ===== */
-.input-group {
-  width: 100%;
-  max-width: 400px;
-  margin-top: 20px;
-}
-
-.input-label {
-  color: white;
-  font-weight: 700;
-  margin-bottom: 8px;
-  font-size: 16px;
-  display: block;
-}
-
-.input-field {
-  width: 100%;
-  padding: 16px 20px;
-  font-size: 18px;
-  border-radius: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.08);
-  color: white;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color .2s ease, background .2s ease;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.input-field:focus {
-  border-color: #4fc3f7;
-  background: rgba(255,255,255,0.12);
-  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
-}
-
-.input-field::placeholder {
-  color: rgba(255,255,255,0.6);
 }
 
 /* ===== ССЫЛКА ОПЛАТЫ ===== */
@@ -760,9 +756,13 @@ html, body {
     font-size: 10px;
   }
   
-  .cart-btn {
+  .auth-btn, .cart-btn {
     width: 40px;
     height: 40px;
+  }
+  
+  .auth-btn span {
+    display: none;
   }
   
   .cart-btn svg {
@@ -826,9 +826,13 @@ html, body {
     font-size: 18px;
   }
   
-  .cart-btn {
+  .auth-btn, .cart-btn {
     width: 36px;
     height: 36px;
+  }
+  
+  .auth-btn span {
+    display: none;
   }
   
   .cart-btn svg {
@@ -864,9 +868,13 @@ html, body {
     font-size: 12px;
   }
   
-  .cart-btn {
+  .auth-btn, .cart-btn {
     width: 34px;
     height: 34px;
+  }
+  
+  .auth-btn span {
+    display: none;
   }
   
   .cart-btn svg {
@@ -878,6 +886,31 @@ html, body {
 @media (min-width: 769px) {
   .menu-scroll {
     padding: 18px 16px 40px;
+  }
+  
+  .auth-btn {
+    min-width: auto;
+    padding: 0 16px;
+  }
+  
+  .auth-btn span {
+    display: inline;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .row-two {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .auth-btn {
+    min-width: auto;
+    padding: 0 14px;
+  }
+  
+  .auth-btn span {
+    display: inline;
+    font-size: 14px;
   }
 }
 </style>
@@ -910,6 +943,13 @@ html, body {
     <div class="menu-header-title">Магазин Duck Shop</div>
     
     <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="auth-btn" id="authBtn">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        <span id="authBtnText">Войти</span>
+      </button>
+
       <button class="cart-btn" id="openCart" aria-label="Корзина">
         <svg viewBox="0 0 24 24">
           <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
@@ -996,6 +1036,7 @@ html, body {
 // ===== КОНСТАНТЫ =====
 const API_URL = 'https://duck-shop-sever.onrender.com';
 const CART_KEY = 'duck_cart_v1';
+const USER_KEY = 'duck_user_v1';
 
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
 let PRODUCTS = [];
@@ -1003,6 +1044,7 @@ let productsCheckInterval = null;
 let cart = {};
 let currentOrderId = null;
 let currentPaymentUrl = null;
+let currentUser = null;
 
 // ===== ФУНКЦИИ ДЛЯ КОРЗИНЫ =====
 function loadCart(){
@@ -1038,13 +1080,13 @@ function fmtRub(n){
 // ===== LOTTIE АНИМАЦИИ =====
 function loadAllLottieAnimations() {
   try {
-    // Используем публичные анимации Lottie
+    // ИСПОЛЬЗУЕМ ВАШИ ЛОКАЛЬНЫЕ ФАЙЛЫ LOTTIE
     const animations = {
-      hello: 'https://assets10.lottiefiles.com/packages/lf20_6xfqjauy.json',
-      download: 'https://assets10.lottiefiles.com/packages/lf20_puciaevh.json',
-      main: 'https://assets10.lottiefiles.com/packages/lf20_khtt8ejx.json',
+      hello: 'hello.json',                    // Ваш файл hello.json
+      download: 'download.json',              // Ваш файл download.json
+      main: 'main.json',                      // Ваш файл main.json
       waiting: 'https://assets2.lottiefiles.com/packages/lf20_puciaevh.json',
-      checkout: 'https://assets10.lottiefiles.com/packages/lf20_u8jppxsl.json',
+      checkout: 'checkout.json',              // Ваш файл checkout.json
       badPay: 'https://assets2.lottiefiles.com/packages/lf20_dews0pqv.json'
     };
     
@@ -1154,6 +1196,56 @@ function loadAllLottieAnimations() {
         sticker.innerHTML = '<div style="color: white; font-size: 50px; text-align: center;">🎁</div>';
       }
     });
+  }
+}
+
+// ===== АВТОРИЗАЦИЯ =====
+function loadUser() {
+  try {
+    const userData = localStorage.getItem(USER_KEY);
+    if (userData) {
+      return JSON.parse(userData);
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки пользователя:', error);
+  }
+  return null;
+}
+
+function saveUser(user) {
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch (error) {
+    console.error('Ошибка сохранения пользователя:', error);
+  }
+}
+
+function clearUser() {
+  localStorage.removeItem(USER_KEY);
+  currentUser = null;
+  updateAuthButton();
+}
+
+function updateAuthButton() {
+  const authBtn = document.getElementById('authBtn');
+  const authBtnText = document.getElementById('authBtnText');
+  
+  if (!authBtn || !authBtnText) return;
+  
+  if (currentUser) {
+    // Пользователь авторизован - кнопка "Профиль"
+    authBtnText.textContent = 'Профиль';
+    authBtn.onclick = function(e) {
+      e.preventDefault();
+      window.location.href = 'profile.html';
+    };
+  } else {
+    // Пользователь не авторизован - кнопка "Войти"
+    authBtnText.textContent = 'Войти';
+    authBtn.onclick = function(e) {
+      e.preventDefault();
+      window.location.href = 'reg_log.html';
+    };
   }
 }
 
@@ -1447,6 +1539,9 @@ window.addEventListener('resize', () => {
   if (PRODUCTS.length > 0) {
     renderProducts();
   }
+  if (currentUser) {
+    updateAuthButton();
+  }
 });
 
 // ===== КОРЗИНА =====
@@ -1500,7 +1595,6 @@ function addToCart(id){
   cart[id] = (cart[id] || 0) + 1;
   saveCart();
   updateBadge();
-  renderCart();
 }
 
 function inc(id){
@@ -1632,7 +1726,7 @@ document.getElementById('proceedToPay').addEventListener('click', async () => {
       body: JSON.stringify({
         items: cart,
         total: total,
-        userId: null // Без пользователя, так как функционал профиля вынесен в отдельный файл
+        userId: currentUser ? currentUser.id : null
       })
     });
     
@@ -1712,9 +1806,11 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Инициализация магазина...');
   
   cart = loadCart();
+  currentUser = loadUser();
   
   loadAllLottieAnimations();
   updateBadge();
+  updateAuthButton();
   checkPaymentResult();
   
   if (PRODUCTS.length === 0) {
