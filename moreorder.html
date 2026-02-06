@@ -102,6 +102,22 @@ html, body {
   font-size: 20px;
 }
 
+.section-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
 /* ===== ИНФОРМАЦИЯ О ЗАКАЗЕ ===== */
 .order-info-grid {
   display: grid;
@@ -130,6 +146,58 @@ html, body {
   color: white;
   font-size: 16px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.order-id-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.order-id-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-btn {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.copy-btn:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+}
+
+.copy-btn.copied {
+  background: rgba(76, 175, 80, 0.3);
+}
+
+.copy-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
 }
 
 /* СТАТУСЫ */
@@ -486,28 +554,49 @@ html, body {
   <!-- ОСНОВНАЯ ИНФОРМАЦИЯ -->
   <div class="order-section">
     <div class="section-title">
-      <span>📋</span>
+      <div class="section-icon">
+        <img src="https://i.imgur.com/Z0L8uQf.png" alt="Информация">
+      </div>
       <span>Основная информация</span>
     </div>
     
     <div class="order-info-grid">
       <div class="info-item">
-        <div class="info-label">🆔 Номер заказа</div>
-        <div class="info-value" id="orderId">-</div>
+        <div class="info-label">
+          <img src="https://i.imgur.com/4b8VXqo.png" alt="ID" style="width: 14px; height: 14px; filter: brightness(0) invert(0.7);">
+          Номер заказа
+        </div>
+        <div class="info-value">
+          <div class="order-id-container">
+            <span class="order-id-text" id="orderId">-</span>
+            <button class="copy-btn" id="copyOrderIdBtn" title="Скопировать номер заказа">
+              <img src="https://i.imgur.com/4Phk2Oq.png" alt="Копировать" class="copy-icon">
+            </button>
+          </div>
+        </div>
       </div>
       
       <div class="info-item">
-        <div class="info-label">📅 Дата покупки</div>
+        <div class="info-label">
+          <img src="https://i.imgur.com/eLWYn0e.png" alt="Дата" style="width: 14px; height: 14px; filter: brightness(0) invert(0.7);">
+          Дата покупки
+        </div>
         <div class="info-value" id="orderDate">-</div>
       </div>
       
       <div class="info-item">
-        <div class="info-label">📧 Email</div>
+        <div class="info-label">
+          <img src="https://i.imgur.com/2bLm2JH.png" alt="Email" style="width: 14px; height: 14px; filter: brightness(0) invert(0.7);">
+          Email
+        </div>
         <div class="info-value" id="orderEmail">-</div>
       </div>
       
       <div class="info-item">
-        <div class="info-label">📊 Статус</div>
+        <div class="info-label">
+          <img src="https://i.imgur.com/8X5Np23.png" alt="Статус" style="width: 14px; height: 14px; filter: brightness(0) invert(0.7);">
+          Статус
+        </div>
         <div class="info-value">
           <span id="orderStatusText">-</span>
           <div class="status-badge" id="orderStatusBadge"></div>
@@ -519,7 +608,9 @@ html, body {
   <!-- СОСТАВ ЗАКАЗА -->
   <div class="order-section">
     <div class="section-title">
-      <span>🛒</span>
+      <div class="section-icon">
+        <img src="https://i.imgur.com/0QZqG6v.png" alt="Корзина">
+      </div>
       <span>Состав заказа</span>
     </div>
     
@@ -573,13 +664,13 @@ function formatDateTime(dateString) {
 
 function getStatusText(status) {
   const statusMap = {
-    'new': '🆕 Новый',
-    'pending': '⏳ Ожидает оплаты',
-    'confirmed': '✅ Оплачен',
-    'waiting': '⏳ Ожидает выполнения',
-    'completed': '🎉 Завершен',
-    'canceled': '❌ Отменен',
-    'failed': '❌ Неудачный'
+    'new': 'Новый',
+    'pending': 'Ожидает оплаты',
+    'confirmed': 'Оплачен',
+    'waiting': 'Ожидает выполнения',
+    'completed': 'Завершен',
+    'canceled': 'Отменен',
+    'failed': 'Неудачный'
   };
   return statusMap[status] || status;
 }
@@ -595,6 +686,44 @@ function getStatusClass(status) {
     'failed': 'status-failed'
   };
   return statusMap[status] || 'status-pending';
+}
+
+// ===== ФУНКЦИЯ КОПИРОВАНИЯ =====
+function initCopyButton() {
+  const copyBtn = document.getElementById('copyOrderIdBtn');
+  const orderIdText = document.getElementById('orderId').textContent;
+  
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(orderIdText);
+      
+      // Визуальная обратная связь
+      const originalHTML = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<img src="https://i.imgur.com/6eB3VQz.png" alt="Скопировано" class="copy-icon">';
+      copyBtn.classList.add('copied');
+      
+      setTimeout(() => {
+        copyBtn.innerHTML = originalHTML;
+        copyBtn.classList.remove('copied');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Ошибка копирования:', error);
+      // Fallback для старых браузеров
+      const textArea = document.createElement('textarea');
+      textArea.value = orderIdText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      // Визуальная обратная связь для fallback
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    }
+  });
 }
 
 // ===== LOTTIE АНИМАЦИЯ =====
@@ -710,6 +839,9 @@ function displayOrder(order) {
   badge.textContent = order.status;
   badge.className = `status-badge ${statusClass}`;
   
+  // Инициализируем кнопку копирования
+  initCopyButton();
+  
   // Товары
   displayOrderItems(order.items || {});
   
@@ -801,8 +933,6 @@ async function init() {
   // Отображаем заказ
   displayOrder(currentOrder);
 }
-
-
 
 // ===== ОБРАБОТЧИК ЗАГРУЗКИ =====
 document.addEventListener('DOMContentLoaded', () => {
