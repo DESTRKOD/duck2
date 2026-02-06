@@ -892,7 +892,7 @@ async function loadOrders(orders) {
       : order.id;
     
     return `
-      <div class="order-item" data-order-id="${order.id}">
+      <div class="order-item" onclick="window.location.href='moreorder.html?order=${order.id}'">
         <div class="order-header">
           <div class="order-id">Заказ #${displayId}</div>
           <div class="order-date">${formatDate(order.date)}</div>
@@ -923,12 +923,6 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 document.getElementById('backToShopBtn').addEventListener('click', () => {
   window.location.href = 'beta-duck.html';
 });
-
-orderItem.addEventListener('click', function() {
-  const orderId = this.getAttribute('data-order-id');
-  window.location.href = `moreorder.html?order=${orderId}`;
-});
-  
 document.getElementById('retryBtn').addEventListener('click', () => {
   if (currentUser) {
     loadProfileData();
