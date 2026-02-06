@@ -923,6 +923,12 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 document.getElementById('backToShopBtn').addEventListener('click', () => {
   window.location.href = 'beta-duck.html';
 });
+
+orderItem.addEventListener('click', function() {
+  const orderId = this.getAttribute('data-order-id');
+  window.location.href = `moreorder.html?order=${orderId}`;
+});
+  
 document.getElementById('retryBtn').addEventListener('click', () => {
   if (currentUser) {
     loadProfileData();
