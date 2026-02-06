@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Shop</title>
+<title>Duck Shop</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -11,16 +11,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
 <style>
-/* ВСЕ СТИЛИ ОСТАЮТСЯ ТЕ ЖЕ, НЕ МЕНЯЕМ */
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body {
   margin: 0;
   width: 100%;
   height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(180deg, #0b3c91 0%, #1565c0 55%, #42a5f5 100%);
+  overflow: hidden;
 }
 
-/* ===== ЭКРАНЫ (с анимацией улёта) ===== */
+/* ===== ЭКРАНЫ ===== */
 .screen, .menu {
   position: absolute;
   inset: 0;
@@ -32,6 +33,8 @@ html, body {
   transform: translateY(16px);
   pointer-events: none;
   transition: opacity .35s ease, transform .35s ease;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .screen.active, .menu.active {
@@ -45,7 +48,11 @@ html, body {
   transform: translateY(-40px);
 }
 
-.sticker { width: 260px; height: 260px; }
+.sticker { 
+  width: 260px; 
+  height: 260px; 
+  margin-bottom: 20px;
+}
 
 .title {
   margin-top: 14px;
@@ -53,11 +60,12 @@ html, body {
   font-weight: 800;
   color: #fff;
   text-align: center;
+  margin-bottom: 20px;
 }
 
-/* ===== КНОПКА ПРОДОЛЖИТЬ ===== */
+/* ===== КНОПКА ===== */
 .button {
-  margin-top: 28px;
+  margin-top: 20px;
   padding: 20px 56px;
   font-size: 22px;
   font-weight: 800;
@@ -70,6 +78,8 @@ html, body {
   cursor: pointer;
   border: none;
   outline: none;
+  min-width: 280px;
+  text-align: center;
 }
 
 .button.pressed {
@@ -85,12 +95,15 @@ html, body {
   box-shadow: 0 8px 20px rgba(0,0,0,.25) !important;
 }
 
-/* ===== МЕНЮ ===== */
-.menu { justify-content: flex-start; }
+/* ===== ШАПКА МЕНЮ ===== */
+.menu { 
+  justify-content: flex-start; 
+  padding: 0;
+}
 
 .menu-header {
   width: 100%;
-  padding: 14px 16px;
+  padding: 16px 20px;
   font-size: 26px;
   font-weight: 900;
   color: #fff;
@@ -100,44 +113,17 @@ html, body {
   justify-content: space-between;
   gap: 12px;
   box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .menu-header-title { 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Кнопка входа/профиля */
-.auth-btn {
-  position: relative;
-  min-width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 14px;
-  background: rgba(255,255,255,.14);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  padding: 0 16px;
-  gap: 8px;
-  color: #fff;
-  font-weight: 700;
-  font-size: 15px;
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
-.auth-btn:active { transform: scale(.97); }
-.auth-btn svg { 
-  width: 22px; 
-  height: 22px; 
-  fill: #fff;
-  flex-shrink: 0;
-}
-.auth-btn:hover {
-  background: rgba(255,255,255,.20);
+  flex: 1;
 }
 
 /* Кнопка корзины */
@@ -153,9 +139,23 @@ html, body {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.15s ease;
 }
-.cart-btn:active { transform: scale(.97); }
-.cart-btn svg { width: 22px; height: 22px; fill: #fff; }
+
+.cart-btn:hover {
+  background: rgba(255,255,255,.2);
+  transform: translateY(-1px);
+}
+
+.cart-btn:active { 
+  transform: scale(.97); 
+}
+
+.cart-btn svg { 
+  width: 22px; 
+  height: 22px; 
+  fill: #fff;
+}
 
 .cart-badge {
   position: absolute;
@@ -175,13 +175,17 @@ html, body {
   box-shadow: 0 8px 18px rgba(0,0,0,.25);
 }
 
+/* ===== КАРТОЧКИ ТОВАРОВ ===== */
 .menu-scroll {
   flex: 1;
   width: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ===== КАРТОЧКА ===== */
 .shop-card {
   position: relative;
   height: 240px;
@@ -195,6 +199,7 @@ html, body {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   opacity: 1;
   transform: translateY(0);
+  margin-bottom: 18px;
 }
 
 .shop-card:hover {
@@ -211,7 +216,11 @@ html, body {
   height: 32px;
   z-index: 2;
 }
-.gift img { width: 100%; height: 100%; display:block; }
+.gift img { 
+  width: 100%; 
+  height: 100%; 
+  display:block;
+}
 
 /* ===== ВЕРХ (КАРТИНКА) ===== */
 .shop-top {
@@ -275,7 +284,7 @@ html, body {
   -webkit-box-orient: vertical;
 }
 
-/* Кнопка покупки/добавления */
+/* Кнопка покупки */
 .shop-buy {
   min-width: 140px;
   height: 44px;
@@ -290,14 +299,23 @@ html, body {
   border: 0;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
-.shop-buy:active { transform: scale(.95); }
+
+.shop-buy:hover {
+  background: #333;
+}
+
+.shop-buy:active { 
+  transform: scale(.95); 
+}
+
 .shop-buy svg {
   width: 20px;
   height: 20px;
   fill: #fff;
 }
+
 .shop-price {
   color: #fff;
   font-size: 15px;
@@ -311,7 +329,7 @@ html, body {
 }
 
 .checkout-summary {
-  width: 90%;
+  width: 100%;
   max-width: 400px;
   background: rgba(255,255,255,0.1);
   border-radius: 20px;
@@ -366,11 +384,13 @@ html, body {
   background: rgba(255,255,255,0.1);
   padding: 10px;
   border-radius: 12px;
+  max-width: 400px;
+  width: 100%;
 }
 
 /* ===== ПОЛЯ ВВОДА ===== */
 .input-group {
-  width: 90%;
+  width: 100%;
   max-width: 400px;
   margin-top: 20px;
 }
@@ -403,45 +423,268 @@ html, body {
   border-color: #4fc3f7;
   background: rgba(255,255,255,0.12);
   box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
-  transform: translateY(-1px);
 }
 
 .input-field::placeholder {
   color: rgba(255,255,255,0.6);
 }
 
-/* ===== КОД ИЗ 6 ЦИФР ===== */
-.code-inputs {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.code-digit {
-  width: 50px;
-  height: 70px;
-  font-size: 32px;
+/* ===== ССЫЛКА ОПЛАТЫ ===== */
+.payment-link {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 18px 40px;
+  font-size: 20px;
   font-weight: 900;
-  text-align: center;
-  border-radius: 12px;
-  border: 2px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.08);
+  background: #00c853;
   color: white;
-  outline: none;
-  transition: border-color .2s ease, background .2s ease;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  letter-spacing: 0.5px;
+  border-radius: 20px;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(0,200,83,0.4);
+  transition: transform .2s ease, box-shadow .2s ease;
 }
 
-.code-digit:focus {
-  border-color: #4fc3f7;
-  background: rgba(255,255,255,0.12);
-  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
-  transform: translateY(-1px);
+.payment-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0,200,83,0.5);
 }
 
-/* ===== ДЕСКТОПНАЯ ВЕРСИЯ С РЯДАМИ ===== */
+/* ===== КОРЗИНА (МОДАЛКА) ===== */
+.cart-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.cart-overlay.open { 
+  display: flex; 
+}
+
+.cart-sheet {
+  width: 100%;
+  max-width: 540px;
+  background: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform .18s ease, opacity .18s ease;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-overlay.open .cart-sheet { 
+  transform: translateY(0); 
+  opacity: 1; 
+}
+
+.cart-head {
+  background: linear-gradient(180deg, #0b3c91, #124fa5);
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cart-head h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.cart-close {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-close:active { 
+  transform: scale(.95); 
+}
+
+.cart-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+  max-height: 50vh;
+}
+
+.cart-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cart-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cart-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+.cart-empty {
+  padding: 18px 10px;
+  text-align: center;
+  color: rgba(0,0,0,.6);
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.cart-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 16px;
+  background: #f6f7fb;
+  margin-bottom: 8px;
+}
+
+.cart-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #1b3fd6 0%, #2f6bff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cart-thumb img {
+  max-width: 92%;
+  max-height: 92%;
+  object-fit: contain;
+  display: block;
+}
+
+.cart-info { 
+  min-width: 0; 
+}
+
+.cart-name {
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
+}
+
+.cart-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(0,0,0,.55);
+}
+
+.cart-qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 0;
+  background: #000;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-btn:active { 
+  transform: scale(.95); 
+}
+
+.qty-num {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 900;
+  color: #333;
+}
+
+.cart-foot {
+  padding: 12px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  display: grid;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cart-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 900;
+  font-size: 16px;
+  color: #333;
+}
+
+.cart-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cart-action {
+  height: 46px;
+  border-radius: 14px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 15px;
+  transition: transform 0.15s ease;
+}
+
+.cart-action:active { 
+  transform: scale(.98); 
+}
+
+.btn-clear { 
+  background: #eef0f6; 
+  color: #333;
+}
+
+.btn-checkout { 
+  background: #000; 
+  color: #fff; 
+}
+
+/* ===== ДЕСКТОПНАЯ ВЕРСИЯ ===== */
 .row-two {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -464,15 +707,15 @@ html, body {
   pointer-events: none;
 }
 
-/* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
 @media (max-width: 768px) {
   .menu-header {
-    padding: 12px 14px;
+    padding: 14px 16px;
     font-size: 22px;
   }
   
   .menu-scroll {
-    padding: 12px 12px 24px;
+    padding: 12px;
   }
   
   .shop-card {
@@ -493,7 +736,6 @@ html, body {
   
   .shop-name {
     font-size: 14px;
-    line-height: 1.1;
   }
   
   .shop-buy {
@@ -518,21 +760,14 @@ html, body {
     font-size: 10px;
   }
   
-  .auth-btn {
-    min-width: auto;
-    height: 40px;
-    padding: 0 12px;
-    font-size: 14px;
-    gap: 6px;
-  }
-  
-  .auth-btn span {
-    display: inline;
-  }
-  
   .cart-btn {
     width: 40px;
     height: 40px;
+  }
+  
+  .cart-btn svg {
+    width: 20px;
+    height: 20px;
   }
   
   .input-field {
@@ -540,21 +775,15 @@ html, body {
     font-size: 16px;
   }
   
-  .code-digit {
-    width: 40px;
-    height: 50px;
-    font-size: 24px;
-  }
-  
   .button {
     padding: 16px 40px;
     font-size: 18px;
     margin-top: 20px;
+    min-width: 240px;
   }
   
   .title {
     font-size: 26px;
-    margin-top: 10px;
   }
   
   .sticker {
@@ -563,7 +792,6 @@ html, body {
   }
 }
 
-/* Мобильная версия (маленькие экраны) */
 @media (max-width: 480px) {
   .row-two {
     grid-template-columns: 1fr;
@@ -583,34 +811,19 @@ html, body {
     height: 36px;
   }
   
-  .code-digit {
-    width: 36px;
-    height: 46px;
-    font-size: 22px;
-  }
-  
   .button {
     padding: 14px 32px;
     font-size: 16px;
+    min-width: 200px;
   }
   
   .menu-header {
-    padding: 10px 12px;
+    padding: 12px 14px;
     font-size: 20px;
   }
   
   .menu-header-title {
     font-size: 18px;
-  }
-  
-  .auth-btn {
-    padding: 0 10px;
-    font-size: 13px;
-    gap: 4px;
-  }
-  
-  .auth-btn span {
-    display: inline;
   }
   
   .cart-btn {
@@ -624,7 +837,6 @@ html, body {
   }
 }
 
-/* Очень маленькие экраны */
 @media (max-width: 360px) {
   .shop-card {
     height: 190px;
@@ -652,468 +864,20 @@ html, body {
     font-size: 12px;
   }
   
-  .code-digit {
-    width: 32px;
-    height: 42px;
-    font-size: 20px;
+  .cart-btn {
+    width: 34px;
+    height: 34px;
   }
   
-  .auth-btn {
-    padding: 0 8px;
-    font-size: 12px;
-  }
-  
-  .auth-btn span {
-    display: inline;
-  }
-  
-  .auth-btn, .cart-btn {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .auth-btn svg, .cart-btn svg {
-    width: 18px;
-    height: 18px;
+  .cart-btn svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
-/* Десктоп - сетка 2 в ряд */
 @media (min-width: 769px) {
   .menu-scroll {
     padding: 18px 16px 40px;
-  }
-  
-  .auth-btn {
-    min-width: auto;
-    padding: 0 16px;
-  }
-  
-  .auth-btn span {
-    display: inline;
-  }
-}
-
-/* Планшетная версия */
-@media (min-width: 481px) and (max-width: 768px) {
-  .row-two {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .auth-btn {
-    min-width: auto;
-    padding: 0 14px;
-  }
-  
-  .auth-btn span {
-    display: inline;
-    font-size: 14px;
-  }
-}
-
-/* ===== МОДАЛКА КОРЗИНЫ ===== */
-.cart-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.45);
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 9999;
-  padding: 12px;
-  box-sizing: border-box;
-}
-.cart-overlay.open { display: flex; }
-
-.cart-sheet {
-  width: 100%;
-  max-width: 540px;
-  background: #fff;
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
-  transform: translateY(14px);
-  opacity: 0;
-  transition: transform .18s ease, opacity .18s ease;
-}
-.cart-overlay.open .cart-sheet { transform: translateY(0); opacity: 1; }
-
-.cart-head {
-  background: linear-gradient(180deg, #0b3c91, #124fa5);
-  color: #fff;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.cart-head h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 900;
-}
-.cart-close {
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 14px;
-  background: rgba(255,255,255,.14);
-  color: #fff;
-  font-size: 22px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.cart-close:active { transform: scale(.95); }
-
-.cart-body {
-  max-height: min(56vh, 520px);
-  overflow: auto;
-  padding: 12px;
-  box-sizing: border-box;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.2) transparent;
-}
-
-.cart-body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.cart-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.cart-body::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
-  border-radius: 3px;
-}
-
-.cart-empty {
-  padding: 18px 10px;
-  text-align: center;
-  color: rgba(0,0,0,.6);
-  font-weight: 800;
-}
-
-.cart-row {
-  display: grid;
-  grid-template-columns: 56px 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 10px;
-  border-radius: 16px;
-  background: #f6f7fb;
-  margin-bottom: 8px;
-}
-.cart-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #1b3fd6 0%, #2f6bff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.cart-thumb img {
-  max-width: 92%;
-  max-height: 92%;
-  object-fit: contain;
-  display: block;
-}
-.cart-info { min-width: 0; }
-.cart-name {
-  font-weight: 900;
-  font-size: 14px;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cart-sub {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 800;
-  color: rgba(0,0,0,.55);
-}
-
-.cart-qty {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.qty-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 0;
-  background: #000;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.qty-btn:active { transform: scale(.95); }
-.qty-num {
-  min-width: 22px;
-  text-align: center;
-  font-weight: 900;
-}
-
-.cart-foot {
-  padding: 12px;
-  border-top: 1px solid rgba(0,0,0,.08);
-  display: grid;
-  gap: 10px;
-}
-.cart-total {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 900;
-  font-size: 16px;
-}
-.cart-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.cart-action {
-  height: 46px;
-  border-radius: 14px;
-  border: 0;
-  cursor: pointer;
-  font-weight: 900;
-  font-size: 15px;
-  transition: transform 0.15s ease;
-}
-.cart-action:active { transform: scale(.98); }
-.btn-clear { background: #eef0f6; }
-.btn-checkout { background: #000; color: #fff; }
-
-/* ===== ССЫЛКА ОПЛАТЫ ===== */
-.payment-link {
-  display: inline-block;
-  margin-top: 30px;
-  padding: 18px 40px;
-  font-size: 20px;
-  font-weight: 900;
-  background: #00c853;
-  color: white;
-  border-radius: 20px;
-  text-decoration: none;
-  box-shadow: 0 12px 30px rgba(0,200,83,0.4);
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-.payment-link:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0,200,83,0.5);
-}
-
-/* ===== ЭКРАН ПРОФИЛЯ ===== */
-.profile-screen {
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.profile-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.profile-avatar {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  margin: 0 auto 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: white;
-  font-weight: 900;
-}
-
-.profile-name {
-  font-size: 24px;
-  font-weight: 800;
-  color: white;
-  margin-bottom: 8px;
-}
-
-.profile-id {
-  font-size: 16px;
-  color: rgba(255,255,255,0.8);
-  margin-bottom: 20px;
-  text-align: center;
-  line-height: 1.4;
-}
-
-.profile-id div:first-child {
-  font-weight: 600;
-  color: #fff;
-}
-
-.profile-id div:last-child {
-  font-size: 14px;
-  color: rgba(255,255,255,0.7);
-  margin-top: 5px;
-}
-
-.profile-section {
-  background: rgba(255,255,255,0.1);
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.section-title {
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.order-item {
-  background: rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 15px;
-  transition: transform 0.2s ease, background 0.2s ease;
-  cursor: pointer;
-}
-
-.order-item:hover {
-  background: rgba(255,255,255,0.12);
-  transform: translateY(-2px);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  gap: 10px; /* ДОБАВЛЕН ОТСТУП МЕЖДУ НОМЕРОМ И ДАТОЙ */
-}
-
-.order-id {
-  color: #ffd700;
-  font-weight: 700;
-  font-size: 15px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.order-date {
-  color: rgba(255,255,255,0.7);
-  font-size: 13px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.order-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.order-total {
-  color: white;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.order-status {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.order-status.completed {
-  background: #4CAF50;
-  color: white;
-}
-
-.order-status.pending {
-  background: #ffd700;
-  color: #333;
-}
-
-.order-status.failed {
-  background: #ff6b6b;
-  color: white;
-}
-
-.no-orders {
-  text-align: center;
-  color: rgba(255,255,255,0.6);
-  padding: 30px 0;
-}
-
-.profile-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.profile-btn {
-  flex: 1;
-  height: 50px;
-  border-radius: 14px;
-  border: none;
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.profile-btn:active {
-  transform: scale(.98);
-}
-
-.btn-logout {
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-
-.btn-back {
-  background: white;
-  color: #0b3c91;
-}
-
-/* Адаптивность профиля */
-@media (max-width: 480px) {
-  .profile-avatar {
-    width: 80px;
-    height: 80px;
-    font-size: 32px;
-  }
-  
-  .profile-name {
-    font-size: 20px;
-  }
-  
-  .profile-section {
-    padding: 15px;
-  }
-  
-  .profile-actions {
-    flex-direction: column;
-  }
-  
-  .order-item {
-    padding: 12px;
   }
 }
 </style>
@@ -1137,22 +901,15 @@ html, body {
 <!-- ИНТРО -->
 <div id="intro" class="screen">
   <div id="animMain" class="sticker"></div>
-  <div class="title">Главное меню</div>
+  <div class="title">Магазин Duck Shop</div>
 </div>
 
 <!-- МАГАЗИН -->
 <div id="menu" class="menu">
   <div class="menu-header">
-    <div class="menu-header-title">Главное меню</div>
+    <div class="menu-header-title">Магазин Duck Shop</div>
     
     <div style="display: flex; gap: 8px; align-items: center;">
-      <a href="reg_log.html" class="auth-btn" id="authBtn">
-        <svg viewBox="0 0 24 24">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>
-        <span id="authBtnText">Войти</span>
-      </a>
-
       <button class="cart-btn" id="openCart" aria-label="Корзина">
         <svg viewBox="0 0 24 24">
           <path d="M7 18a2 2 0 1 0 0 4a2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4a2 2 0 0 0 0-4zM7.16 14h9.45a2 2 0 0 0 1.75-1.03l3.58-6.49-1.74-.99-3.58 6.49H8.53L5.21 4H1v2h3l3.6 7.59-1.35 2.44C5.52 16.37 6.48 18 8 18h12v-2H8l1.16-2z"/>
@@ -1164,33 +921,6 @@ html, body {
 
   <div class="menu-scroll" id="cardsContainer">
     <!-- Товары будут вставлены сюда -->
-  </div>
-</div>
-
-<!-- ПРОФИЛЬ -->
-<div id="profile" class="screen profile-screen">
-  <div class="profile-header">
-    <div class="profile-avatar" id="profileAvatar">U</div>
-    <div class="profile-name" id="profileName">Пользователь</div>
-    <div class="profile-id" id="profileId">
-      <div>TG ID: ...</div>
-      <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">@username</div>
-    </div>
-  </div>
-  
-  <div class="profile-section">
-    <div class="section-title">
-      <span>📦 История заказов</span>
-      <span id="ordersCount">0 заказов</span>
-    </div>
-    <div class="orders-list" id="ordersList">
-      <!-- Заказы будут вставлены здесь -->
-    </div>
-  </div>
-  
-  <div class="profile-actions">
-    <button class="profile-btn btn-logout" id="logoutBtn">Выйти</button>
-    <button class="profile-btn btn-back" id="backToMenuBtn">Вернуться в магазин</button>
   </div>
 </div>
 
@@ -1263,69 +993,18 @@ html, body {
 </div>
 
 <script>
-// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
+// ===== КОНСТАНТЫ =====
 const API_URL = 'https://duck-shop-sever.onrender.com';
-const ORDERS_KEY = 'duck_orders_v1';
 const CART_KEY = 'duck_cart_v1';
-let currentOrderId = null;
-let currentPaymentUrl = null;
-let currentUser = null;
+
+// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
 let PRODUCTS = [];
 let productsCheckInterval = null;
 let cart = {};
+let currentOrderId = null;
+let currentPaymentUrl = null;
 
-// ===== КОНФИГУРАЦИЯ FIRESTORE =====
-let firebaseApp, firestore, auth;
-
-// Функция для получения конфигурации Firebase с сервера
-async function getFirebaseConfig() {
-  try {
-    const response = await fetch(`${API_URL}/api/firebase-config`);
-    const data = await response.json();
-    
-    if (data.success && data.config) {
-      console.log('✅ Конфигурация Firebase получена с сервера');
-      return data.config;
-    } else {
-      console.warn('⚠️ Не удалось получить конфигурацию Firebase с сервера');
-      return null;
-    }
-  } catch (error) {
-    console.warn('⚠️ Ошибка получения конфигурации Firebase:', error);
-    return null;
-  }
-}
-
-// Асинхронная инициализация Firebase
-async function initializeFirebase() {
-  try {
-    // Получаем конфигурацию с сервера
-    const firebaseConfig = await getFirebaseConfig();
-    
-    if (!firebaseConfig) {
-      console.warn('⚠️ Конфигурация Firebase не получена. Firestore не будет использоваться.');
-      return false;
-    }
-    
-    // Проверяем, инициализирован ли Firebase
-    if (!firebase.apps.length) {
-      firebaseApp = firebase.initializeApp(firebaseConfig);
-    } else {
-      firebaseApp = firebase.app();
-    }
-    
-    firestore = firebase.firestore();
-    auth = firebase.auth();
-    
-    console.log('✅ Firebase успешно инициализирован');
-    return true;
-  } catch (error) {
-    console.error('❌ Ошибка инициализации Firebase:', error);
-    return false;
-  }
-}
-
-// ===== ОСНОВНЫЕ ФУНКЦИИ =====
+// ===== ФУНКЦИИ ДЛЯ КОРЗИНЫ =====
 function loadCart(){
   try {
     const raw = localStorage.getItem(CART_KEY);
@@ -1356,28 +1035,17 @@ function fmtRub(n){
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
 }
 
-function getPluralEnding(number) {
-  if (number % 10 === 1 && number % 100 !== 11) {
-    return '';
-  } else if ([2, 3, 4].includes(number % 10) && ![12, 13, 14].includes(number % 100)) {
-    return 'а';
-  } else {
-    return 'ов';
-  }
-}
-
 // ===== LOTTIE АНИМАЦИИ =====
 function loadAllLottieAnimations() {
   try {
-    // ВАШИ GitHub URL для Lottie анимаций
-    // Замените эти URL на ваши реальные ссылки
+    // Используем публичные анимации Lottie
     const animations = {
-      hello: 'hello.json',                    // Экран с кнопкой продолжить
-      download: 'download.json',              // Экран загрузки
-      main: 'main.json',                      // Экран с текстом "Главное меню"
-      waiting: 'https://assets2.lottiefiles.com/packages/lf20_puciaevh.json',      // Экран ожидания (используем публичную)
-      checkout: 'checkout.json',              // Страница создания заказа
-      badPay: 'https://assets2.lottiefiles.com/packages/lf20_dews0pqv.json'        // Неудачная оплата (используем публичную)
+      hello: 'https://assets10.lottiefiles.com/packages/lf20_6xfqjauy.json',
+      download: 'https://assets10.lottiefiles.com/packages/lf20_puciaevh.json',
+      main: 'https://assets10.lottiefiles.com/packages/lf20_khtt8ejx.json',
+      waiting: 'https://assets2.lottiefiles.com/packages/lf20_puciaevh.json',
+      checkout: 'https://assets10.lottiefiles.com/packages/lf20_u8jppxsl.json',
+      badPay: 'https://assets2.lottiefiles.com/packages/lf20_dews0pqv.json'
     };
     
     // Загрузка анимации приветствия
@@ -1489,199 +1157,9 @@ function loadAllLottieAnimations() {
   }
 }
 
-// ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ (FIRESTORE) =====
-
-// Сохранить заказ в Firestore
-async function saveOrderToFirestore(orderId, total, items, userId = null) {
-  try {
-    if (!firestore) {
-      console.warn('⚠️ Firestore не инициализирован, использую localStorage');
-      return saveOrderToLocal(orderId, total, items);
-    }
-    
-    const orderData = {
-      id: orderId,
-      userId: userId || (currentUser ? currentUser.id : 'anonymous'),
-      username: currentUser ? currentUser.username : 'Гость',
-      total: total,
-      items: items,
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    // Сохраняем в Firestore
-    await firestore.collection('orders').doc(orderId).set(orderData);
-    console.log(`✅ Заказ #${orderId} сохранен в Firestore`);
-    
-    // Также сохраняем локально для оффлайн-доступа
-    saveOrderToLocal(orderId, total, items);
-    
-    return orderId;
-  } catch (error) {
-    console.error('❌ Ошибка сохранения заказа в Firestore:', error);
-    
-    // Fallback: сохраняем только локально
-    saveOrderToLocal(orderId, total, items);
-    return orderId;
-  }
-}
-
-// Локальное сохранение (fallback)
-function saveOrderToLocal(orderId, total, items) {
-  try {
-    const savedOrders = localStorage.getItem(ORDERS_KEY);
-    const orders = savedOrders ? JSON.parse(savedOrders) : [];
-    
-    const newOrder = {
-      id: orderId,
-      date: new Date().toISOString(),
-      total: total,
-      items: { ...items },
-      status: 'pending'
-    };
-    
-    orders.unshift(newOrder);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-    console.log(`✅ Заказ #${orderId} сохранен локально (fallback)`);
-  } catch (error) {
-    console.error('❌ Ошибка локального сохранения:', error);
-  }
-}
-
-// Загрузка из Firestore (ИСПРАВЛЕННАЯ ВЕРСИЯ)
-async function loadOrdersFromFirestore() {
-  try {
-    if (!firestore || !currentUser) return [];
-    
-    const ordersRef = firestore.collection('orders');
-    
-    // Используем простой запрос без сортировки, чтобы избежать ошибки индекса
-    const snapshot = await ordersRef
-      .where('userId', '==', currentUser.id)
-      .get();
-    
-    const orders = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      orders.push({
-        id: data.id,
-        date: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-        total: data.total,
-        items: data.items || {},
-        status: data.status || 'pending'
-      });
-    });
-    
-    // Сортируем локально после получения данных
-    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    return orders;
-  } catch (error) {
-    console.error('❌ Ошибка загрузки из Firestore:', error);
-    
-    // Если ошибка связана с индексом, предлагаем создать его
-    if (error.code === 'failed-precondition') {
-      console.warn('⚠️ Требуется создать индекс в Firestore. Перейдите по ссылке из ошибки чтобы создать индекс.');
-    }
-    
-    return [];
-  }
-}
-
-// Загрузка из localStorage
-function loadOrdersFromLocal() {
-  try {
-    const savedOrders = localStorage.getItem(ORDERS_KEY);
-    if (!savedOrders) return [];
-    
-    const orders = JSON.parse(savedOrders);
-    orders.sort((a, b) => new Date(b.date) - new Date(a.date));
-    return orders;
-  } catch (error) {
-    console.error('❌ Ошибка загрузки из localStorage:', error);
-    return [];
-  }
-}
-
-// Функция для загрузки всех заказов (объединение Firestore и localStorage)
-async function loadOrders() {
-  try {
-    const allOrders = [];
-    
-    // 1. Пробуем загрузить из Firestore
-    if (firestore && currentUser) {
-      try {
-        const firestoreOrders = await loadOrdersFromFirestore();
-        firestoreOrders.forEach(order => {
-          // Убираем source из заказов - не показываем пользователю источник
-          allOrders.push(order);
-        });
-        console.log(`✅ Загружено ${firestoreOrders.length} заказов из Firestore`);
-      } catch (firestoreError) {
-        console.warn('⚠️ Не удалось загрузить из Firestore:', firestoreError);
-      }
-    }
-    
-    // 2. Загружаем из localStorage
-    try {
-      const localOrders = loadOrdersFromLocal();
-      localOrders.forEach(order => {
-        // Проверяем, нет ли такого же заказа уже в списке
-        const exists = allOrders.some(o => o.id === order.id);
-        if (!exists) {
-          allOrders.push(order);
-        }
-      });
-      console.log(`✅ Загружено ${localOrders.length} заказов из localStorage`);
-    } catch (localError) {
-      console.warn('⚠️ Не удалось загрузить из localStorage:', localError);
-    }
-    
-    // 3. Сортируем по дате (новые сверху)
-    allOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    console.log(`📊 Итого заказов: ${allOrders.length}`);
-    return allOrders;
-    
-  } catch (error) {
-    console.error('❌ Критическая ошибка при загрузке заказов:', error);
-    return loadOrdersFromLocal(); // Fallback
-  }
-}
-
-// Обновить статус заказа
-async function updateOrderStatus(orderId, newStatus) {
-  try {
-    // Обновляем в Firestore
-    if (firestore) {
-      await firestore.collection('orders').doc(orderId).update({
-        status: newStatus,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      console.log(`✅ Статус заказа #${orderId} обновлен в Firestore: "${newStatus}"`);
-    }
-    
-    // Обновляем локально
-    const orders = loadOrdersFromLocal();
-    const orderIndex = orders.findIndex(order => order.id === orderId);
-    
-    if (orderIndex !== -1) {
-      orders[orderIndex].status = newStatus;
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-      console.log(`✅ Статус заказа #${orderId} обновлен локально: "${newStatus}"`);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('❌ Ошибка обновления статуса:', error);
-    return false;
-  }
-}
-
-// ===== Переключение экранов =====
+// ===== ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ =====
 function show(id) {
-  const ids = ['hello', 'load', 'intro', 'menu', 'profile', 'waiting', 'checkout', 'payment', 'badPay'];
+  const ids = ['hello', 'load', 'intro', 'menu', 'waiting', 'checkout', 'payment', 'badPay'];
   const current = ids.map(x => document.getElementById(x)).find(el => el.classList.contains('active'));
   const next = document.getElementById(id);
 
@@ -1693,10 +1171,6 @@ function show(id) {
         el.classList.remove('active', 'leaving');
       });
       next.classList.add('active');
-      
-      if (id === 'profile' && currentUser) {
-        loadProfileData();
-      }
       
       if (id === 'menu') {
         const cardsContainer = document.getElementById('cardsContainer');
@@ -1716,10 +1190,6 @@ function show(id) {
     ids.forEach(x => document.getElementById(x).classList.remove('active', 'leaving'));
     next.classList.add('active');
     
-    if (id === 'profile' && currentUser) {
-      loadProfileData();
-    }
-    
     if (id === 'menu') {
       const cardsContainer = document.getElementById('cardsContainer');
       if (cardsContainer) {
@@ -1736,16 +1206,19 @@ function show(id) {
   }
 }
 
-// ===== Кнопка "Продолжить" =====
+// ===== КНОПКА "ПРОДОЛЖИТЬ" =====
 document.getElementById('continueBtn').addEventListener('pointerdown', function() {
   this.classList.add('pressed');
 });
+
 document.getElementById('continueBtn').addEventListener('pointerup', function() {
   this.classList.remove('pressed');
 });
+
 document.getElementById('continueBtn').addEventListener('pointerleave', function() {
   this.classList.remove('pressed');
 });
+
 document.getElementById('continueBtn').addEventListener('click', function() {
   show('load');
   setTimeout(() => {
@@ -1753,294 +1226,6 @@ document.getElementById('continueBtn').addEventListener('click', function() {
     setTimeout(() => show('menu'), 2000);
   }, 2500);
 });
-
-// ===== АВТОРИЗАЦИЯ =====
-function checkAuth() {
-  const savedUser = localStorage.getItem('duck_user');
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      updateAuthButton();
-    } catch (e) {
-      console.error('Ошибка парсинга пользователя:', e);
-      localStorage.removeItem('duck_user');
-    }
-  }
-}
-
-function updateAuthButton() {
-  const authBtn = document.getElementById('authBtn');
-  const authBtnText = document.getElementById('authBtnText');
-  
-  if (!authBtn || !authBtnText) return;
-  
-  if (currentUser) {
-    authBtn.removeAttribute('href');
-    authBtn.style.cursor = 'pointer';
-    
-    if (window.innerWidth <= 768 && currentUser.username) {
-      const shortName = currentUser.username.length > 6 
-        ? currentUser.username.substring(0, 6) + '...' 
-        : currentUser.username;
-      authBtnText.textContent = shortName;
-    } else if (currentUser.username) {
-      authBtnText.textContent = currentUser.username;
-    } else {
-      authBtnText.textContent = 'Профиль';
-    }
-  } else {
-    authBtn.href = 'reg_log.html';
-    authBtnText.textContent = 'Войти';
-  }
-}
-
-document.getElementById('authBtn').addEventListener('click', function(e) {
-  if (currentUser) {
-    e.preventDefault();
-    show('profile');
-  }
-});
-
-// ===== ПРОФИЛЬ И ЗАКАЗЫ =====
-async function loadProfileData() {
-  if (!currentUser) {
-    console.log('⚠️ Нет текущего пользователя для загрузки профиля');
-    return;
-  }
-  
-  try {
-    console.log('👤 Загружаем данные профиля для:', currentUser.id);
-    
-    // 1. Показываем загрузку в UI
-    const ordersList = document.getElementById('ordersList');
-    const ordersCount = document.getElementById('ordersCount');
-    
-    if (ordersList) {
-      ordersList.innerHTML = '<div style="color: rgba(255,255,255,0.6); text-align: center; padding: 30px; font-size: 16px;">⌛ Загрузка заказов...</div>';
-    }
-    
-    if (ordersCount) {
-      ordersCount.textContent = '⌛ Загрузка...';
-    }
-    
-    // 2. Инициализируем Firebase если еще не инициализирован
-    if (!firestore) {
-      const initialized = await initializeFirebase();
-      if (!initialized) {
-        console.warn('⚠️ Firebase не инициализирован, использую только локальные данные');
-      }
-    }
-    
-    // 3. Загружаем данные профиля с сервера
-    let profileData = null;
-    try {
-      const response = await fetch(`${API_URL}/api/auth/profile?userId=${currentUser.id}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        profileData = data;
-        console.log('✅ Данные профиля загружены с сервера');
-      } else {
-        console.warn('⚠️ Сервер не вернул данные профиля:', data.error);
-      }
-    } catch (serverError) {
-      console.warn('⚠️ Ошибка загрузки профиля с сервера:', serverError);
-    }
-    
-    // 4. Обновляем UI профиля (если есть данные)
-    if (profileData && profileData.user) {
-      const user = profileData.user;
-      
-      // Имя пользователя
-      document.getElementById('profileName').textContent = user.username || 'Пользователь';
-      
-      // Telegram ID и username
-      const profileIdElement = document.getElementById('profileId');
-      if (user.telegramUsername) {
-        profileIdElement.innerHTML = `
-          <div>TG ID: ${user.tgId || '...'}</div>
-          <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">
-            @${user.telegramUsername}
-          </div>
-        `;
-      } else {
-        profileIdElement.innerHTML = `<div>TG ID: ${user.tgId || '...'}</div>`;
-      }
-      
-      // Аватар
-      const avatar = document.getElementById('profileAvatar');
-      if (user.avatarUrl) {
-        avatar.innerHTML = `
-          <img src="${user.avatarUrl}" 
-               alt="${user.username}" 
-               style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
-               onerror="this.onerror=null; this.parentElement.textContent='${user.username.charAt(0).toUpperCase()}'">
-        `;
-      } else if (user.username) {
-        avatar.textContent = user.username.charAt(0).toUpperCase();
-      }
-    } else {
-      // Используем данные из localStorage если нет данных с сервера
-      document.getElementById('profileName').textContent = currentUser.username || 'Пользователь';
-      
-      const avatar = document.getElementById('profileAvatar');
-      if (currentUser.username) {
-        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
-      }
-    }
-    
-    // 5. Загружаем ВСЕ заказы (Firestore + локальные)
-    console.log('📦 Загружаем историю заказов...');
-    const orders = await loadOrders();
-    
-    // 6. Отображаем заказы
-    if (ordersList && ordersCount) {
-      if (orders.length > 0) {
-        ordersCount.textContent = `${orders.length} заказ${getPluralEnding(orders.length)}`;
-        displayOrdersInProfile(orders);
-        
-      } else {
-        ordersCount.textContent = '0 заказов';
-        ordersList.innerHTML = `
-          <div class="no-orders">
-            <div style="font-size: 18px; margin-bottom: 10px;">📭</div>
-            <div style="font-size: 16px; margin-bottom: 8px;">У вас пока нет заказов</div>
-            <div style="font-size: 13px; color: rgba(255,255,255,0.5);">
-              Совершите первую покупку чтобы начать историю!
-            </div>
-          </div>
-        `;
-      }
-    }
-    
-    console.log('✅ Загрузка профиля завершена');
-    
-  } catch (error) {
-    console.error('❌ Критическая ошибка загрузки профиля:', error);
-    
-    // Fallback: показываем только локальные данные
-    const ordersList = document.getElementById('ordersList');
-    const ordersCount = document.getElementById('ordersCount');
-    
-    if (ordersList && ordersCount) {
-      try {
-        const localOrders = loadOrdersFromLocal();
-        
-        if (localOrders.length > 0) {
-          ordersCount.textContent = `${localOrders.length} заказ${getPluralEnding(localOrders.length)}`;
-          displayOrdersInProfile(localOrders);
-        } else {
-          ordersCount.textContent = 'Ошибка загрузки';
-          ordersList.innerHTML = `
-            <div class="no-orders" style="color: rgba(255,255,255,0.5);">
-              <div style="font-size: 18px; margin-bottom: 10px;">⚠️</div>
-              <div>Не удалось загрузить историю</div>
-              <div style="font-size: 12px; margin-top: 8px;">Попробуйте позже</div>
-            </div>
-          `;
-        }
-      } catch (fallbackError) {
-        console.error('❌ Ошибка fallback:', fallbackError);
-        ordersCount.textContent = 'Ошибка';
-        ordersList.innerHTML = '<div style="color: #ff6b6b;">Ошибка загрузки данных</div>';
-      }
-    }
-  }
-}
-
-// Отобразить заказы в профиле
-function displayOrdersInProfile(orders) {
-  const ordersList = document.getElementById('ordersList');
-  if (!ordersList) return;
-  
-  ordersList.innerHTML = orders.map(order => {
-    let statusText = '';
-    let statusClass = '';
-    
-    switch(order.status) {
-      case 'completed':
-        statusText = 'Завершен';
-        statusClass = 'completed';
-        break;
-      case 'failed':
-        statusText = 'Отменен';
-        statusClass = 'failed';
-        break;
-      case 'pending':
-      default:
-        statusText = 'В обработке';
-        statusClass = 'pending';
-    }
-    
-    const orderDate = new Date(order.date);
-    const formattedDate = orderDate.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    
-    // Форматируем ID для отображения (убираем префикс temp_)
-    const displayId = order.id.startsWith('temp_') 
-      ? order.id.replace('temp_', 'ВРЕМ-') 
-      : order.id;
-    
-    // Информация о товарах
-    let itemsInfo = '';
-    if (order.items && typeof order.items === 'object') {
-      const itemEntries = Object.entries(order.items);
-      if (itemEntries.length > 0) {
-        const firstItem = itemEntries[0];
-        const product = PRODUCTS.find(p => p.id === firstItem[0]);
-        const itemName = product ? product.name : `Товар ×${firstItem[1]}`;
-        
-        itemsInfo = `
-          <div class="order-items" style="
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
-            margin: 5px 0;
-            font-weight: 500;
-            line-height: 1.3;
-          ">
-            ${itemName}${itemEntries.length > 1 ? ` + ещё ${itemEntries.length - 1}` : ''}
-          </div>
-        `;
-      }
-    }
-    
-    return `
-      <div class="order-item" data-order-id="${order.id}" data-status="${order.status}">
-        <div class="order-header">
-          <div class="order-id">Заказ #${displayId}</div>
-          <div class="order-date">${formattedDate}</div>
-        </div>
-        ${itemsInfo}
-        <div class="order-details">
-          <div class="order-total">${fmtRub(order.total)}</div>
-          <div class="order-status ${statusClass}">${statusText}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  // Добавляем обработчики кликов после рендера
-  setTimeout(() => {
-    document.querySelectorAll('.order-item').forEach(item => {
-      item.addEventListener('click', function() {
-        const orderId = this.getAttribute('data-order-id');
-        const status = this.getAttribute('data-status');
-        showOrderDetails(orderId, status);
-      });
-    });
-  }, 50);
-}
-
-function showOrderDetails(orderId, status) {
-  // Здесь можно реализовать детальный просмотр заказа
-  console.log(`Просмотр деталей заказа #${orderId}, статус: ${status}`);
-  // Можно добавить модальное окно с деталями
-}
 
 // ===== ТОВАРЫ =====
 const DEFAULT_PRODUCTS = [
@@ -2057,24 +1242,6 @@ const DEFAULT_PRODUCTS = [
   { id: "bpp_g", name: "Brawl Pass Plus", price: 1250, image_url: "https://i.imgur.com/21InnIc.png", is_gift: true },
   { id: "pro", name: "Pro Pass", price: 2200, image_url: "https://i.imgur.com/6808Xnp.png", is_gift: false }
 ];
-
-function updateOrderNumberElements(orderId) {
-  const orderNumber = `Заказ #${orderId}`;
-  
-  const elements = [
-    'waitingOrderNumber',
-    'badPayOrderNumber'
-  ];
-  
-  elements.forEach(elementId => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      element.textContent = orderNumber;
-    }
-  });
-  
-  console.log(`Обновлены номера заказов: ${orderNumber}`);
-}
 
 function sortProductsForDesktop(products) {
   const desktopOrder = [
@@ -2170,23 +1337,6 @@ async function loadProducts() {
     PRODUCTS = [...DEFAULT_PRODUCTS];
     renderProducts();
   }
-}
-
-function startAutoRefreshProducts() {
-  console.log('🚀 Запуск автообновления товаров');
-  
-  if (productsCheckInterval) clearInterval(productsCheckInterval);
-  
-  if (PRODUCTS.length === 0) {
-    loadProducts();
-  } else {
-    renderProducts();
-  }
-  
-  productsCheckInterval = setInterval(() => {
-    console.log('🔄 Автообновление товаров...');
-    loadProducts();
-  }, 10000);
 }
 
 function renderProducts() {
@@ -2297,9 +1447,6 @@ window.addEventListener('resize', () => {
   if (PRODUCTS.length > 0) {
     renderProducts();
   }
-  if (currentUser) {
-    updateAuthButton();
-  }
 });
 
 // ===== КОРЗИНА =====
@@ -2353,6 +1500,7 @@ function addToCart(id){
   cart[id] = (cart[id] || 0) + 1;
   saveCart();
   updateBadge();
+  renderCart();
 }
 
 function inc(id){
@@ -2472,25 +1620,19 @@ document.getElementById('backToMenu').addEventListener('click', () => {
   show('menu');
 });
 
-// ===== ОПЛАТА (С FIRESTORE) =====
+// ===== ОПЛАТА =====
 document.getElementById('proceedToPay').addEventListener('click', async () => {
   const total = cartSum();
   if (total < 10 || total > 10000) return;
   
-  // Создаем временный ID заказа
-  const tempOrderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
   try {
-    // СОХРАНЯЕМ ЗАКАЗ В FIRESTORE СРАЗУ (временный)
-    await saveOrderToFirestore(tempOrderId, total, cart, currentUser ? currentUser.id : null);
-    
     const response = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items: cart,
         total: total,
-        userId: currentUser ? currentUser.id : null
+        userId: null // Без пользователя, так как функционал профиля вынесен в отдельный файл
       })
     });
     
@@ -2499,38 +1641,6 @@ document.getElementById('proceedToPay').addEventListener('click', async () => {
     if (data.success && data.paymentUrl) {
       currentOrderId = data.orderId;
       currentPaymentUrl = data.paymentUrl;
-      
-      // Функция обновления ID в Firestore
-      async function updateOrderIdInFirestore(oldId, newId) {
-        try {
-          if (!firestore) return false;
-          
-          // Получаем старый заказ
-          const oldDoc = await firestore.collection('orders').doc(oldId).get();
-          if (!oldDoc.exists) return false;
-          
-          const oldData = oldDoc.data();
-          
-          // Создаем новый документ с новым ID
-          await firestore.collection('orders').doc(newId).set({
-            ...oldData,
-            id: newId,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          
-          // Удаляем старый документ
-          await firestore.collection('orders').doc(oldId).delete();
-          
-          console.log(`🔄 ID заказа обновлен в Firestore: ${oldId} → ${newId}`);
-          return true;
-        } catch (error) {
-          console.error('❌ Ошибка обновления ID в Firestore:', error);
-          return false;
-        }
-      }
-      
-      // ОБНОВЛЯЕМ ID заказа в Firestore
-      await updateOrderIdInFirestore(tempOrderId, data.orderId);
       
       updateOrderNumberElements(currentOrderId);
       
@@ -2545,72 +1655,31 @@ document.getElementById('proceedToPay').addEventListener('click', async () => {
       }, 1000);
       
     } else {
-      // Удаляем временный заказ если ошибка
-      async function deleteOrderFromFirestore(orderId) {
-        try {
-          if (!firestore) return false;
-          
-          await firestore.collection('orders').doc(orderId).delete();
-          console.log(`🗑️ Заказ #${orderId} удален из Firestore`);
-          return true;
-        } catch (error) {
-          console.error('❌ Ошибка удаления из Firestore:', error);
-          return false;
-        }
-      }
-      
-      // Удаление из localStorage
-      function removeOrderFromLocal(orderId) {
-        try {
-          const orders = loadOrdersFromLocal();
-          const filteredOrders = orders.filter(order => order.id !== orderId);
-          localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredOrders));
-          console.log(`🗑️ Заказ #${orderId} удален из localStorage`);
-          return true;
-        } catch (error) {
-          console.error('❌ Ошибка удаления из localStorage:', error);
-          return false;
-        }
-      }
-      
-      await deleteOrderFromFirestore(tempOrderId);
-      removeOrderFromLocal(tempOrderId);
       alert('Ошибка при создании заказа: ' + (data.error || 'неизвестная ошибка'));
     }
   } catch (error) {
-    // Удаляем временный заказ если ошибка
-    async function deleteOrderFromFirestore(orderId) {
-      try {
-        if (!firestore) return false;
-        
-        await firestore.collection('orders').doc(orderId).delete();
-        console.log(`🗑️ Заказ #${orderId} удален из Firestore`);
-        return true;
-      } catch (error) {
-        console.error('❌ Ошибка удаления из Firestore:', error);
-        return false;
-      }
-    }
-    
-    function removeOrderFromLocal(orderId) {
-      try {
-        const orders = loadOrdersFromLocal();
-        const filteredOrders = orders.filter(order => order.id !== orderId);
-        localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredOrders));
-        console.log(`🗑️ Заказ #${orderId} удален из localStorage`);
-        return true;
-      } catch (error) {
-        console.error('❌ Ошибка удаления из localStorage:', error);
-        return false;
-      }
-    }
-    
-    await deleteOrderFromFirestore(tempOrderId);
-    removeOrderFromLocal(tempOrderId);
     console.error('❌ Ошибка:', error);
     alert('Ошибка соединения с сервером');
   }
 });
+
+function updateOrderNumberElements(orderId) {
+  const orderNumber = `Заказ #${orderId}`;
+  
+  const elements = [
+    'waitingOrderNumber',
+    'badPayOrderNumber'
+  ];
+  
+  elements.forEach(elementId => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.textContent = orderNumber;
+    }
+  });
+  
+  console.log(`Обновлены номера заказов: ${orderNumber}`);
+}
 
 // ===== КНОПКИ ВОЗВРАТА =====
 document.getElementById('toMenuFromBadPay').addEventListener('click', () => {
@@ -2623,19 +1692,7 @@ function checkPaymentResult() {
   const status = urlParams.get('payment');
   const orderId = urlParams.get('order');
   
-  if (status === 'success' && orderId) {
-    // ОБНОВЛЯЕМ СТАТУС ЗАКАЗА
-    updateOrderStatus(orderId, 'completed');
-    
-    setTimeout(() => {
-      alert(`✅ Заказ #${orderId} успешно оплачен! Статус обновлен.`);
-    }, 500);
-    
-    window.location.href = `success.html?order=${orderId}`;
-    
-  } else if (status === 'fail' && orderId) {
-    updateOrderStatus(orderId, 'failed');
-    
+  if (status === 'fail' && orderId) {
     currentOrderId = orderId;
     updateOrderNumberElements(currentOrderId);
     show('badPay');
@@ -2643,94 +1700,46 @@ function checkPaymentResult() {
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
   }
-  
-  const authToken = urlParams.get('auth');
-  if (authToken) {
-    verifyAuthToken(authToken);
-    const newUrl = window.location.pathname;
-    window.history.replaceState({}, '', newUrl);
-  }
 }
-
-async function verifyAuthToken(token) {
-  try {
-    const response = await fetch(`${API_URL}/api/auth/check/${token}`);
-    const data = await response.json();
-    
-    if (data.success && data.authenticated) {
-      currentUser = data.user;
-      localStorage.setItem('duck_user', JSON.stringify(data.user));
-      updateAuthButton();
-      
-      alert(`✅ Вход выполнен!\nДобро пожаловать, ${data.user.username}!`);
-      
-      show('menu');
-    }
-  } catch (error) {
-    console.error('Ошибка проверки токена:', error);
-  }
-}
-
-// ===== ИНИЦИАЛИЗАЦИЯ =====
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('🚀 Инициализация сайта...');
-  
-  // Инициализируем корзину
-  cart = loadCart();
-  
-  // Загружаем анимации Lottie
-  loadAllLottieAnimations();
-  updateBadge();
-  checkAuth();
-  checkPaymentResult();
-  
-  // Загружаем товары
-  if (PRODUCTS.length === 0) {
-    loadProducts();
-  }
-  
-  // Асинхронно инициализируем Firebase (не блокируем основной поток)
-  setTimeout(async () => {
-    try {
-      await initializeFirebase();
-      console.log('✅ Firebase готов к использованию');
-      
-    } catch (error) {
-      console.warn('⚠️ Firebase не будет использоваться:', error.message);
-    }
-  }, 1000);
-});
-
-// ===== КНОПКИ ПРОФИЛЯ =====
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  try {
-    // Очищаем данные пользователя
-    localStorage.removeItem('duck_user');
-    currentUser = null;
-    
-    // Обновляем кнопку авторизации
-    updateAuthButton();
-    
-    // Возвращаемся в меню
-    show('menu');
-    
-    console.log('✅ Выход выполнен');
-  } catch (error) {
-    console.error('❌ Ошибка при выходе:', error);
-  }
-});
-
-document.getElementById('backToMenuBtn').addEventListener('click', () => {
-  show('menu');
-});
 
 // ===== ОЧИСТКА КОРЗИНЫ =====
 document.getElementById('clearCart').addEventListener('click', () => {
   clearCart();
 });
 
-// Автоматическое обновление товаров
-startAutoRefreshProducts();
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Инициализация магазина...');
+  
+  cart = loadCart();
+  
+  loadAllLottieAnimations();
+  updateBadge();
+  checkPaymentResult();
+  
+  if (PRODUCTS.length === 0) {
+    loadProducts();
+  }
+  
+  startAutoRefreshProducts();
+});
+
+function startAutoRefreshProducts() {
+  console.log('🚀 Запуск автообновления товаров');
+  
+  if (productsCheckInterval) clearInterval(productsCheckInterval);
+  
+  if (PRODUCTS.length === 0) {
+    loadProducts();
+  } else {
+    renderProducts();
+  }
+  
+  productsCheckInterval = setInterval(() => {
+    console.log('🔄 Автообновление товаров...');
+    loadProducts();
+  }, 10000);
+}
 </script>
 </body>
 </html>
